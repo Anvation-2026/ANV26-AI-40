@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertOctagon, RefreshCw, Terminal } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ErrorStateProps {
   title?: string;
@@ -9,32 +9,28 @@ interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'Connection or Analysis Error',
+  title = 'Analysis Notice',
   message,
   onRetry,
   showCommandHelp = true,
 }) => {
   return (
-    <div className="bg-white rounded-2xl border border-rose-200 p-8 shadow-xs text-center max-w-xl mx-auto my-8">
-      <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 border border-rose-100">
-        <AlertOctagon className="w-7 h-7" />
+    <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs text-center max-w-md mx-auto">
+      <div className="w-10 h-10 rounded-[8px] bg-rose-50 text-clinical-danger flex items-center justify-center mx-auto mb-2.5 border border-rose-200">
+        <AlertCircle className="w-5 h-5" />
       </div>
 
-      <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+      <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
         {title}
       </h3>
 
-      <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+      <p className="text-xs text-navy-muted mt-1 leading-relaxed">
         {message}
       </p>
 
       {showCommandHelp && (
-        <div className="mt-5 p-3.5 bg-slate-900 text-slate-200 rounded-xl text-left font-mono text-xs overflow-x-auto shadow-inner">
-          <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-[11px]">
-            <Terminal className="w-3.5 h-3.5" />
-            <span>Start backend server:</span>
-          </div>
-          <code>uvicorn backend.main:app --reload --port 8000</code>
+        <div className="mt-3 p-2.5 bg-canvas rounded-[6px] border border-border text-left font-mono text-[11px] text-navy-muted">
+          <code>uvicorn backend.main:app --port 8000</code>
         </div>
       )}
 
@@ -42,10 +38,10 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-teal-500/20"
+          className="mt-4 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold rounded-[8px] transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
         >
-          <RefreshCw className="w-4 h-4" />
-          <span>Retry Operation</span>
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Retry Analysis</span>
         </button>
       )}
     </div>

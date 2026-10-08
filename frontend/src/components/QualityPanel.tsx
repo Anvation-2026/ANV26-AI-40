@@ -8,15 +8,15 @@ interface QualityPanelProps {
 }
 
 export const QualityPanel: React.FC<QualityPanelProps> = ({ quality, ood }) => {
-  const renderMetricRow = (label: string, check: QualityCheck | null | undefined) => {
+  const renderRow = (name: string, check: QualityCheck | null | undefined) => {
     if (!check || check.value === null || check.value === undefined) {
       return (
-        <tr className="border-b border-slate-100 last:border-0 text-xs">
-          <td className="py-2.5 font-medium text-slate-700">{label}</td>
-          <td className="py-2.5 text-slate-400">Not evaluated</td>
-          <td className="py-2.5 text-slate-400">&mdash;</td>
+        <tr className="border-b border-border/60 last:border-0 text-xs">
+          <td className="py-2.5 font-medium text-navy-foreground">{name}</td>
+          <td className="py-2.5 text-navy-muted">Not evaluated</td>
+          <td className="py-2.5 text-navy-muted">&mdash;</td>
           <td className="py-2.5 text-right">
-            <span className="inline-flex items-center gap-1 text-slate-400 text-xs">
+            <span className="inline-flex items-center gap-1 text-navy-muted text-[11px]">
               <MinusCircle className="w-3.5 h-3.5" />
               <span>N/A</span>
             </span>
@@ -25,30 +25,28 @@ export const QualityPanel: React.FC<QualityPanelProps> = ({ quality, ood }) => {
       );
     }
 
-    const passed = check.passed;
-
     return (
-      <tr className="border-b border-slate-100 last:border-0 text-xs">
-        <td className="py-2.5 font-medium text-slate-700">{label}</td>
-        <td className="py-2.5 font-mono text-slate-700">{check.value.toFixed(1)}</td>
-        <td className="py-2.5 font-mono text-slate-400">
-          {check.threshold !== null ? `&ge; ${check.threshold.toFixed(1)}` : '&mdash;'}
+      <tr className="border-b border-border/60 last:border-0 text-xs">
+        <td className="py-2.5 font-medium text-navy-foreground">{name}</td>
+        <td className="py-2.5 font-mono tabular-nums text-navy-foreground font-semibold">
+          {check.value.toFixed(1)}
+        </td>
+        <td className="py-2.5 font-mono tabular-nums text-navy-muted">
+          {check.threshold !== null ? `≥ ${check.threshold.toFixed(1)}` : '&mdash;'}
         </td>
         <td className="py-2.5 text-right">
-          {passed === true && (
-            <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+          {check.passed === true ? (
+            <span className="inline-flex items-center gap-1 text-clinical-success font-semibold text-[11px]">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Pass</span>
             </span>
-          )}
-          {passed === false && (
-            <span className="inline-flex items-center gap-1 text-rose-600 font-medium">
+          ) : check.passed === false ? (
+            <span className="inline-flex items-center gap-1 text-clinical-danger font-semibold text-[11px]">
               <XCircle className="w-3.5 h-3.5" />
               <span>Fail</span>
             </span>
-          )}
-          {passed === null && (
-            <span className="inline-flex items-center gap-1 text-slate-400">
+          ) : (
+            <span className="inline-flex items-center gap-1 text-navy-muted text-[11px]">
               <MinusCircle className="w-3.5 h-3.5" />
               <span>&mdash;</span>
             </span>
@@ -59,34 +57,39 @@ export const QualityPanel: React.FC<QualityPanelProps> = ({ quality, ood }) => {
   };
 
   const qualityBadge = {
-    acceptable: { bg: 'bg-emerald-50 text-emerald-800 border-emerald-300', label: 'Acceptable' },
-    poor: { bg: 'bg-rose-50 text-rose-800 border-rose-300', label: 'Poor Quality' },
-    not_evaluated: { bg: 'bg-slate-100 text-slate-700 border-slate-300', label: 'Not Evaluated' },
+    acceptable: { bg: 'bg-emerald-50 text-emerald-800 border-emerald-200', label: 'Acceptable Quality' },
+    poor: { bg: 'bg-rose-50 text-rose-800 border-rose-200', label: 'Degraded / Poor Quality' },
+    not_evaluated: { bg: 'bg-slate-100 text-slate-700 border-slate-200', label: 'Not Evaluated' },
   }[quality.status];
 
   const oodLabel = ood.evaluated
     ? ood.is_ood
       ? 'Out of Distribution'
-      : 'In-Distribution (X-Ray)'
+      : 'In-Domain (Chest X-Ray)'
     : 'Not Evaluated';
 
   const oodColor = ood.evaluated
     ? ood.is_ood
-      ? 'bg-rose-50 text-rose-800 border-rose-300'
-      : 'bg-emerald-50 text-emerald-800 border-emerald-300'
-    : 'bg-slate-100 text-slate-700 border-slate-300';
+      ? 'bg-rose-50 text-rose-800 border-rose-200'
+      : 'bg-teal-50 text-teal-800 border-teal-200'
+    : 'bg-slate-100 text-slate-700 border-slate-200';
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-          Image Quality & Domain Check
-        </h3>
+    <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
+            Image Quality & Domain Guardrails
+          </h3>
+          <span className="text-[11px] text-navy-muted">
+            Heuristic clarity validation and Mahalanobis distance OOD filter
+          </span>
+        </div>
         <div className="flex gap-2">
-          <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${qualityBadge.bg}`}>
+          <span className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold ${qualityBadge.bg}`}>
             {qualityBadge.label}
           </span>
-          <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${oodColor}`}>
+          <span className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold ${oodColor}`}>
             {oodLabel}
           </span>
         </div>
@@ -95,26 +98,26 @@ export const QualityPanel: React.FC<QualityPanelProps> = ({ quality, ood }) => {
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-400">
-              <th className="pb-2 font-semibold">Check</th>
+            <tr className="border-b border-border text-[11px] uppercase tracking-wider text-navy-muted">
+              <th className="pb-2 font-semibold">Quality Test</th>
               <th className="pb-2 font-semibold">Value</th>
               <th className="pb-2 font-semibold">Threshold</th>
-              <th className="pb-2 font-semibold text-right">Result</th>
+              <th className="pb-2 font-semibold text-right">Status</th>
             </tr>
           </thead>
           <tbody>
-            {renderMetricRow('Sharpness / Blur', quality.blur)}
-            {renderMetricRow('Brightness', quality.brightness)}
-            {renderMetricRow('Contrast', quality.contrast)}
+            {renderRow('Laplacian Sharpness', quality.blur)}
+            {renderRow('Mean Brightness', quality.brightness)}
+            {renderRow('Contrast Variance', quality.contrast)}
           </tbody>
         </table>
       </div>
 
       {quality.reasons.length > 0 && (
-        <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
-          <div className="flex items-center gap-1.5 font-semibold mb-1">
-            <AlertTriangle className="w-4 h-4 text-rose-600" />
-            <span>Quality Defect Reasons</span>
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-[10px] text-xs text-rose-900">
+          <div className="flex items-center gap-1.5 font-bold mb-1 text-clinical-danger">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Image Quality Defect Detected</span>
           </div>
           <ul className="list-disc list-inside space-y-0.5 text-[11px]">
             {quality.reasons.map((r, i) => (
@@ -125,9 +128,11 @@ export const QualityPanel: React.FC<QualityPanelProps> = ({ quality, ood }) => {
       )}
 
       {ood.is_ood && (
-        <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-900">
-          <span className="font-semibold block mb-0.5">Domain Guard Triggered</span>
-          <span>{ood.reason || 'Image features deviate from chest X-ray distribution.'}</span>
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-[10px] text-xs text-purple-900">
+          <span className="font-bold block mb-0.5">Out-of-Distribution Warning</span>
+          <span className="text-[11px] leading-relaxed">
+            {ood.reason || 'Input characteristics deviate from expected chest X-ray distribution. Inference halted.'}
+          </span>
         </div>
       )}
     </div>

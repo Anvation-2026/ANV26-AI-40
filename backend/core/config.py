@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     def get_validation_report_file(self) -> Path:
         p = Path(self.VALIDATION_REPORT_PATH)
-        if p.is_absolute() and p.exists():
+        if p.is_absolute():
             return p
         if p.exists():
             return p.resolve()

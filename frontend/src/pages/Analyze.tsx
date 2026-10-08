@@ -1,27 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Loader2,
-  RefreshCw,
   Search,
   Sliders,
   Database,
-  Tag,
-  Hash,
+  FileImage,
 } from 'lucide-react';
 import { ImageUploader } from '../components/ImageUploader';
-import { ImagePreview } from '../components/ImagePreview';
+import { XrayViewer } from '../components/XrayViewer';
 import { FindingCard } from '../components/FindingCard';
 import { ConfidencePanel } from '../components/ConfidencePanel';
 import { QualityPanel } from '../components/QualityPanel';
-import { HeatmapViewer } from '../components/HeatmapViewer';
 import { EvidencePanel } from '../components/EvidencePanel';
 import { EscalationPanel } from '../components/EscalationPanel';
 import { DemoModeBanner } from '../components/DemoModeBanner';
+import { ModelStatusCard } from '../components/ModelStatusCard';
 import { ErrorState } from '../components/ErrorState';
+import { useToast } from '../components/Toast';
 import { getModelStatus, predictImage, NetworkError } from '../services/api';
 import { AnalysisResponse, ModelStatusResponse } from '../types/analysis';
 
 export const Analyze: React.FC = () => {
+  const { showToast } = useToast();
   const [modelStatus, setModelStatus] = useState<ModelStatusResponse | null>(null);
   const [demoScenario, setDemoScenario] = useState<string>('uncertain');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -33,38 +33,28 @@ export const Analyze: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const timeoutIdRef = useRef<number | null>(null);
 
-  // Check model status on mount
   useEffect(() => {
     let mounted = true;
     getModelStatus()
       .then((data) => {
         if (mounted) setModelStatus(data);
       })
-      .catch(() => {
-        // Handled silently or on submit
-      });
+      .catch(() => {});
 
     return () => {
       mounted = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current);
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
     };
   }, []);
 
   const handleFileSelected = (file: File) => {
-    // Clean up previous object URL if any
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
     setAnalysisResult(null);
     setNetworkError(null);
+    showToast(`Loaded ${file.name}`, 'info');
   };
 
   const handleClear = () => {
@@ -76,14 +66,23 @@ export const Analyze: React.FC = () => {
       clearTimeout(timeoutIdRef.current);
       timeoutIdRef.current = null;
     }
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(null);
     setPreviewUrl(null);
     setAnalysisResult(null);
     setNetworkError(null);
     setLoading(false);
+  };
+
+  const loadSamplePreset = async (url: string, name: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const file = new File([blob], name, { type: 'image/png' });
+      handleFileSelected(file);
+    } catch {
+      showToast('Could not load sample asset', 'error');
+    }
   };
 
   const handleAnalyze = async () => {
@@ -96,10 +95,10 @@ export const Analyze: React.FC = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // 60-second client-side safety timeout
     timeoutIdRef.current = window.setTimeout(() => {
       controller.abort();
-      setNetworkError('Analysis request timed out after 60 seconds. Please check the backend connection.');
+      setNetworkError('Analysis request timed out after 60 seconds.');
+      showToast('Request timed out', 'error');
       setLoading(false);
     }, 60000);
 
@@ -107,13 +106,23 @@ export const Analyze: React.FC = () => {
       const scenarioParam = modelStatus?.mode === 'demo' ? demoScenario : undefined;
       const res = await predictImage(selectedFile, controller.signal, scenarioParam);
       setAnalysisResult(res);
+
+      if (res.status === 'success') {
+        showToast('Decision support evaluation complete', 'success');
+      } else if (res.status === 'uncertain') {
+        showToast('Decision abstained due to uncertainty', 'info');
+      } else {
+        showToast(`Status: ${res.status}`, 'info');
+      }
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        // Ignored or handled if triggered by timeout
+        // Ignored
       } else if (err instanceof NetworkError) {
         setNetworkError(err.message);
+        showToast(err.message, 'error');
       } else {
-        setNetworkError('An unexpected network failure occurred during analysis.');
+        setNetworkError('A connection error occurred during analysis.');
+        showToast('Connection error', 'error');
       }
     } finally {
       if (timeoutIdRef.current) {
@@ -128,8 +137,59 @@ export const Analyze: React.FC = () => {
   const isDemo = modelStatus?.mode === 'demo';
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Demo Mode Banner (shown only when mode === 'demo') */}
+    <div className="space-y-4 max-w-7xl mx-auto">
+      {/* Compact Operational Bar */}
+      <div className="bg-surface rounded-[12px] border border-border px-4 py-2.5 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div>
+          <h2 className="text-sm font-bold text-navy-foreground tracking-tight">
+            Decision Support & Triage Workspace
+          </h2>
+          <span className="text-[11px] text-navy-muted">
+            Independent Image Inspection & Grad-CAM Evidence
+          </span>
+        </div>
+
+        {/* Quick Sample Presets */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-medium text-navy-muted mr-1 hidden sm:inline">
+            Load Educational Sample:
+          </span>
+          <button
+            type="button"
+            onClick={() => loadSamplePreset('/assets/sample-normal.png', 'sample-normal.png')}
+            disabled={loading}
+            className="px-2.5 py-1 text-[11px] font-medium text-navy-foreground bg-canvas hover:bg-slate-200/80 border border-border rounded-[6px] transition-colors"
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            onClick={() => loadSamplePreset('/assets/sample-pneumonia.png', 'sample-pneumonia.png')}
+            disabled={loading}
+            className="px-2.5 py-1 text-[11px] font-medium text-navy-foreground bg-canvas hover:bg-slate-200/80 border border-border rounded-[6px] transition-colors"
+          >
+            Pneumonia
+          </button>
+          <button
+            type="button"
+            onClick={() => loadSamplePreset('/assets/demo-blurred.png', 'sample-blurred.png')}
+            disabled={loading}
+            className="px-2.5 py-1 text-[11px] font-medium text-navy-muted hover:text-navy-foreground bg-canvas hover:bg-slate-200/80 border border-border rounded-[6px] transition-colors"
+          >
+            Blur Test
+          </button>
+          <button
+            type="button"
+            onClick={() => loadSamplePreset('/assets/demo-ood.png', 'sample-ood.png')}
+            disabled={loading}
+            className="px-2.5 py-1 text-[11px] font-medium text-navy-muted hover:text-navy-foreground bg-canvas hover:bg-slate-200/80 border border-border rounded-[6px] transition-colors"
+          >
+            OOD Test
+          </button>
+        </div>
+      </div>
+
+      {/* Demo Mode Banner (only when in demo mode) */}
       {isDemo && (
         <DemoModeBanner
           scenario={demoScenario}
@@ -137,73 +197,99 @@ export const Analyze: React.FC = () => {
         />
       )}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Educational Chest X-Ray Analysis
-        </h1>
-        <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-          Upload a de-identified educational chest radiograph for multi-stage triage inspection, quality validation, and explainability heatmaps.
-        </p>
-      </div>
-
-      {/* Upload and Preview Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-5 space-y-4">
+      {/* Main Workspace: 60% Interactive Viewer / 40% Results Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left Column (Viewer & Upload) */}
+        <div className="lg:col-span-7 space-y-3">
           {!selectedFile ? (
-            <ImageUploader onFileSelected={handleFileSelected} disabled={loading} />
+            <div className="bg-surface rounded-[12px] border border-border p-6 shadow-xs">
+              <div className="mb-3.5">
+                <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
+                  Radiograph Upload
+                </h3>
+                <p className="text-xs text-navy-muted">
+                  Drag and drop a public or de-identified educational radiograph (PNG, JPEG, WEBP &le; 10 MB).
+                </p>
+              </div>
+              <ImageUploader onFileSelected={handleFileSelected} disabled={loading} />
+            </div>
           ) : (
-            <div className="space-y-4">
-              <ImagePreview
-                file={selectedFile}
-                onClear={handleClear}
-                disabled={loading}
+            <div className="space-y-3">
+              {/* Interactive Medical Image Viewer */}
+              <XrayViewer
+                originalUrl={previewUrl}
+                heatmap={analysisResult?.heatmap || null}
+                status={analysisResult?.status}
               />
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleAnalyze}
-                  disabled={loading}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 text-white font-bold text-sm rounded-xl shadow-xs transition-colors focus:outline-none focus:ring-4 focus:ring-teal-500/20"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Analyzing Chest X-Ray...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-4 h-4" />
-                      <span>Run Triage Analysis</span>
-                    </>
-                  )}
-                </button>
+              {/* Action Toolbar */}
+              <div className="bg-surface rounded-[12px] border border-border p-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 truncate text-xs text-navy-muted">
+                  <FileImage className="w-4 h-4 text-teal-700 flex-shrink-0" />
+                  <span className="font-semibold text-navy-foreground truncate max-w-[200px]">
+                    {selectedFile.name}
+                  </span>
+                  <span>&middot;</span>
+                  <span className="font-mono tabular-nums">
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </span>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  disabled={loading}
-                  className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
-                >
-                  Reset
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAnalyze}
+                    disabled={loading}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 disabled:bg-slate-300 text-white font-semibold text-xs rounded-[8px] shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Evaluating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-3.5 h-3.5" />
+                        <span>{analysisResult ? 'Re-evaluate' : 'Run Decision Support'}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    disabled={loading}
+                    className="px-3 py-2 bg-canvas hover:bg-slate-200/70 text-navy-muted hover:text-navy-foreground font-medium text-xs rounded-[8px] border border-border transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+                  >
+                    Clear Image
+                  </button>
+                </div>
               </div>
             </div>
           )}
+
+          {/* Model Status Bar */}
+          <ModelStatusCard compact={false} onStatusLoaded={setModelStatus} />
         </div>
 
-        {/* Results Region */}
-        <div className="lg:col-span-7" aria-live="polite">
+        {/* Right Column: Diagnostic & Triage Guidance */}
+        <div className="lg:col-span-5 space-y-3" aria-live="polite">
           {loading && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
-              <div className="w-12 h-12 rounded-full border-4 border-teal-200 border-t-teal-600 animate-spin mx-auto mb-4"></div>
-              <h3 className="text-base font-bold text-slate-800">
-                Processing Radiograph
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                Validating image dimensions, evaluating blur & contrast metrics, checking out-of-distribution distance, and computing Grad-CAM activations...
-              </p>
+            <div className="bg-surface rounded-[12px] border border-border p-8 text-center shadow-xs space-y-3">
+              <div className="w-8 h-8 rounded-full border-3 border-teal-200 border-t-teal-700 animate-spin mx-auto"></div>
+              <div>
+                <h3 className="text-sm font-bold text-navy-foreground">
+                  Evaluating Radiograph
+                </h3>
+                <p className="text-xs text-navy-muted mt-1 max-w-xs mx-auto leading-relaxed">
+                  Executing quality verification, out-of-distribution distance scoring, calibrated probability, and Grad-CAM activations...
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <div className="h-12 bg-slate-100 rounded-[8px] animate-pulse"></div>
+                <div className="h-20 bg-slate-100 rounded-[8px] animate-pulse"></div>
+              </div>
             </div>
           )}
 
@@ -215,81 +301,54 @@ export const Analyze: React.FC = () => {
           )}
 
           {!loading && !analysisResult && !networkError && (
-            <div className="bg-slate-100/60 rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center text-slate-400">
-              <Sliders className="w-8 h-8 mx-auto mb-2 opacity-60" />
-              <p className="text-sm font-semibold text-slate-600">
-                Awaiting Upload
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                Select or drop an educational chest radiograph to view triage support, confidence scores, and visual overlays.
+            <div className="bg-surface rounded-[12px] border border-dashed border-border p-8 text-center shadow-xs">
+              <Sliders className="w-7 h-7 mx-auto text-navy-muted opacity-40 mb-2" />
+              <h3 className="text-sm font-bold text-navy-foreground">
+                Awaiting Analysis
+              </h3>
+              <p className="text-xs text-navy-muted mt-1 max-w-xs mx-auto leading-relaxed">
+                Upload a radiograph or pick an educational preset to view triage results, probability calibration, and Grad-CAM attention maps.
               </p>
             </div>
           )}
 
           {!loading && analysisResult && (
-            <div className="space-y-6">
+            <div className="space-y-3">
               {/* Finding Card */}
               <FindingCard analysis={analysisResult} />
 
               {/* Confidence & Uncertainty */}
               <ConfidencePanel analysis={analysisResult} />
 
-              {/* Quality & OOD Checks */}
+              {/* Quality & Domain Guardrails */}
               <QualityPanel
                 quality={analysisResult.quality}
                 ood={analysisResult.ood}
               />
 
-              {/* Grad-CAM Heatmap Viewer */}
-              <HeatmapViewer
-                heatmap={analysisResult.heatmap}
-                originalImageUrl={previewUrl}
-                status={analysisResult.status}
-              />
-
-              {/* Evidence & Explanation */}
+              {/* Model Evidence & Explanations */}
               <EvidencePanel
                 explanation={analysisResult.explanation}
                 evidence={analysisResult.evidence}
                 limitations={analysisResult.limitations}
               />
 
-              {/* Escalation & Triage Panel */}
+              {/* Educational Escalation Protocol */}
               <EscalationPanel triage={analysisResult.triage} />
 
-              {/* Model Metadata Footer */}
-              <div className="p-4 bg-slate-100 rounded-xl border border-slate-200/80 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <span className="flex items-center gap-1">
-                    <Database className="w-3.5 h-3.5 text-slate-400" />
-                    <span>
-                      Model: <strong>{analysisResult.model.model_name || 'N/A'}</strong> (
-                      {analysisResult.model.model_version || 'v1'})
-                    </span>
+              {/* Provenance Footer */}
+              <div className="p-3 bg-canvas rounded-[10px] border border-border text-[11px] text-navy-muted flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 truncate">
+                  <Database className="w-3.5 h-3.5 text-teal-700 flex-shrink-0" />
+                  <span className="truncate">
+                    {analysisResult.model.model_name || 'ResNet-18'} ({analysisResult.model.model_version || 'v1'})
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5 text-slate-400" />
-                    <span>
-                      Dataset: <strong>{analysisResult.model.dataset || 'PneumoniaMNIST+'}</strong>
-                    </span>
-                  </span>
+                  <span>&middot;</span>
+                  <span>{analysisResult.model.dataset || 'PneumoniaMNIST+'}</span>
                 </div>
-                <div className="flex items-center gap-2 font-mono text-[10px] text-slate-400">
-                  <Hash className="w-3 h-3" />
-                  <span>Request: {analysisResult.request_id}</span>
-                </div>
-              </div>
-
-              {/* Reset to analyze another image */}
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Analyze Another Radiograph</span>
-                </button>
+                <span className="font-mono text-[10px] text-navy-muted">
+                  ID: {analysisResult.request_id.slice(0, 8)}
+                </span>
               </div>
             </div>
           )}

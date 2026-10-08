@@ -14,7 +14,6 @@ export const ConfusionMatrix: React.FC<ConfusionMatrixProps> = ({ data }) => {
   const numRows = matrix.length;
   const numCols = matrix[0]?.length || 0;
 
-  // Compute maximum cell value for heat intensity
   let maxVal = 0;
   for (let r = 0; r < numRows; r++) {
     for (let c = 0; c < numCols; c++) {
@@ -23,41 +22,41 @@ export const ConfusionMatrix: React.FC<ConfusionMatrixProps> = ({ data }) => {
   }
 
   const getIntensityClass = (val: number, isDiagonal: boolean) => {
-    if (val === 0) return 'bg-slate-50 text-slate-400';
-    if (!maxVal) return 'bg-slate-100 text-slate-700';
+    if (val === 0) return 'bg-canvas text-navy-muted border-border';
+    if (!maxVal) return 'bg-slate-100 text-navy-foreground border-border';
 
     const ratio = val / maxVal;
     if (isDiagonal) {
-      if (ratio > 0.6) return 'bg-emerald-600 text-white font-bold';
-      if (ratio > 0.3) return 'bg-emerald-400 text-slate-900 font-semibold';
-      return 'bg-emerald-100 text-emerald-950 font-medium';
+      if (ratio > 0.6) return 'bg-teal-700 text-white font-bold border-teal-800';
+      if (ratio > 0.3) return 'bg-teal-600 text-white font-semibold border-teal-700';
+      return 'bg-teal-100 text-teal-950 font-medium border-teal-200';
     } else {
-      if (ratio > 0.3) return 'bg-rose-500 text-white font-bold';
-      if (ratio > 0.1) return 'bg-rose-200 text-rose-950 font-semibold';
-      return 'bg-rose-50 text-rose-900 font-medium';
+      if (ratio > 0.3) return 'bg-rose-600 text-white font-bold border-rose-700';
+      if (ratio > 0.1) return 'bg-rose-200 text-rose-950 font-semibold border-rose-300';
+      return 'bg-rose-50 text-rose-900 font-medium border-rose-200';
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+    <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs">
       <div className="mb-4">
-        <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-          Confusion Matrix
+        <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
+          Confusion Matrix (Test Benchmark)
         </h3>
-        <span className="text-xs text-slate-400">
-          Predicted vs True Ground Truth Classes on Test Partition
+        <span className="text-xs text-navy-muted">
+          Predicted vs. Ground-Truth Classes on PneumoniaMNIST+ Partition
         </span>
       </div>
 
       <div className="overflow-x-auto">
         <div className="inline-block min-w-full">
           {/* Header Row: Predicted Labels */}
-          <div className="grid grid-cols-[100px_repeat(2,minmax(120px,1fr))] gap-2 mb-2">
+          <div className="grid grid-cols-[110px_repeat(2,minmax(130px,1fr))] gap-2.5 mb-2.5">
             <div></div>
             {labels.map((lbl, idx) => (
               <div
                 key={idx}
-                className="text-center text-xs font-semibold uppercase tracking-wider text-slate-500"
+                className="text-center text-xs font-semibold uppercase tracking-wider text-navy-muted"
               >
                 Pred: {lbl}
               </div>
@@ -68,10 +67,10 @@ export const ConfusionMatrix: React.FC<ConfusionMatrixProps> = ({ data }) => {
           {matrix.map((row, rowIdx) => (
             <div
               key={rowIdx}
-              className="grid grid-cols-[100px_repeat(2,minmax(120px,1fr))] gap-2 mb-2 items-center"
+              className="grid grid-cols-[110px_repeat(2,minmax(130px,1fr))] gap-2.5 mb-2.5 items-center"
             >
-              <div className="text-right pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                True: {labels[rowIdx] || `C${rowIdx}`}
+              <div className="text-right pr-3 text-xs font-semibold uppercase tracking-wider text-navy-muted">
+                True: {labels[rowIdx] || `Class ${rowIdx}`}
               </div>
               {row.map((val, colIdx) => {
                 const isDiagonal = rowIdx === colIdx;
@@ -79,9 +78,9 @@ export const ConfusionMatrix: React.FC<ConfusionMatrixProps> = ({ data }) => {
                 return (
                   <div
                     key={colIdx}
-                    className={`h-16 rounded-xl flex flex-col items-center justify-center border border-slate-200/80 shadow-2xs transition-transform hover:scale-[1.02] ${cellClass}`}
+                    className={`h-16 rounded-[9px] flex flex-col items-center justify-center border shadow-2xs transition-transform hover:scale-[1.01] ${cellClass}`}
                   >
-                    <span className="text-lg font-mono font-bold">{val}</span>
+                    <span className="text-lg font-mono tabular-nums font-bold">{val}</span>
                     <span className="text-[10px] opacity-80 uppercase tracking-wider">
                       {isDiagonal ? 'Correct' : 'Error'}
                     </span>

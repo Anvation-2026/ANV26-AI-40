@@ -37,19 +37,19 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-      <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+    <div className="bg-surface rounded-[12px] border border-border overflow-hidden shadow-xs">
+      <div className="p-3 bg-canvas border-b border-border flex items-center justify-between text-xs text-navy-muted">
         <div className="flex items-center gap-2 truncate pr-2">
-          <FileText className="w-4 h-4 text-teal-600 flex-shrink-0" />
-          <span className="font-medium text-slate-800 truncate" title={file.name}>
+          <FileText className="w-4 h-4 text-teal-700 flex-shrink-0" />
+          <span className="font-semibold text-navy-foreground truncate" title={file.name}>
             {file.name}
           </span>
-          <span className="text-slate-400">&bull;</span>
-          <span>{formatSize(file.size)}</span>
+          <span className="text-border">&bull;</span>
+          <span className="font-mono tabular-nums">{formatSize(file.size)}</span>
           {dimensions && (
             <>
-              <span className="text-slate-400">&bull;</span>
-              <span>
+              <span className="text-border">&bull;</span>
+              <span className="font-mono tabular-nums">
                 {dimensions.width}&times;{dimensions.height} px
               </span>
             </>
@@ -61,21 +61,21 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
             type="button"
             onClick={onClear}
             disabled={disabled}
-            aria-label="Remove image"
-            className="p-1 hover:bg-slate-200 rounded-md text-slate-500 hover:text-slate-800 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500"
+            aria-label="Remove uploaded image"
+            className="p-1 hover:bg-slate-200/80 rounded-[6px] text-navy-muted hover:text-navy-foreground disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
           >
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
 
-      <div className="relative bg-slate-900 flex items-center justify-center p-4 max-h-[380px] min-h-[220px]">
+      <div className="relative bg-[#08121C] flex items-center justify-center p-4 max-h-[360px] min-h-[220px]">
         {objectUrl && (
           <img
             src={objectUrl}
             alt="Uploaded chest X-ray preview"
             onLoad={handleImageLoaded}
-            className="max-h-[340px] w-auto max-w-full object-contain rounded shadow"
+            className="max-h-[320px] w-auto max-w-full object-contain rounded-[8px] shadow-lg border border-white/5"
           />
         )}
       </div>

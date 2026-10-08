@@ -17,13 +17,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const isEvaluated = value !== null && value !== undefined && !isNaN(value);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+    <div className="bg-surface rounded-[12px] border border-border p-4 shadow-xs flex flex-col justify-between transition-all hover:border-slate-300">
       <div>
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+        <span className="text-[11px] font-semibold text-navy-muted uppercase tracking-wider block mb-0.5">
           {label}
         </span>
         {description && (
-          <p className="text-[11px] text-slate-400 mb-2 leading-tight">
+          <p className="text-[11px] text-navy-muted mb-2 leading-tight">
             {description}
           </p>
         )}
@@ -31,11 +31,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       <div className="mt-2">
         {isEvaluated ? (
-          <span className="text-2xl font-black text-slate-900 tracking-tight font-mono">
+          <span className="text-xl sm:text-2xl font-black text-navy-foreground tracking-tight font-mono tabular-nums">
             {formatMetric(value, isPercentage)}
           </span>
         ) : (
-          <span className="text-sm font-semibold text-slate-400 italic">
+          <span className="text-xs font-medium text-navy-muted italic bg-canvas px-2 py-0.5 rounded-[6px] border border-border/60">
             Not evaluated
           </span>
         )}

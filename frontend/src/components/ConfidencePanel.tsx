@@ -19,85 +19,108 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ analysis }) =>
 
   const isSuccess = status === 'success';
 
-  // Uncertainty badge color
-  const uncertaintyBadge = {
-    low: { bg: 'bg-emerald-50 text-emerald-800 border-emerald-300', label: 'Low Uncertainty' },
-    moderate: { bg: 'bg-amber-50 text-amber-800 border-amber-300', label: 'Moderate Uncertainty' },
-    high: { bg: 'bg-rose-50 text-rose-800 border-rose-300', label: 'High Uncertainty' },
-    not_evaluated: { bg: 'bg-slate-100 text-slate-700 border-slate-300', label: 'Not Evaluated' },
+  const uncertaintyConfig = {
+    low: {
+      bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      label: 'Low Uncertainty',
+      desc: 'Predictions show stable statistical convergence across MC-dropout iterations.',
+    },
+    moderate: {
+      bg: 'bg-amber-50 text-amber-800 border-amber-200',
+      label: 'Moderate Uncertainty',
+      desc: 'Minor feature variance detected. Interpret results with heightened caution.',
+    },
+    high: {
+      bg: 'bg-rose-50 text-rose-800 border-rose-200',
+      label: 'High Uncertainty',
+      desc: 'Substantial variance across prediction samples. Decision safety abstention triggered.',
+    },
+    not_evaluated: {
+      bg: 'bg-slate-100 text-slate-700 border-slate-200',
+      label: 'Not Evaluated',
+      desc: 'Uncertainty estimation was not computed by the model engine.',
+    },
   }[uncertainty.level];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          Model Confidence & Uncertainty
-        </h3>
+    <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
+            Confidence & Uncertainty Calibration
+          </h3>
+          <span className="text-[11px] text-navy-muted">
+            Probability scaling and ensemble variance metrics
+          </span>
+        </div>
         <span
-          className={`text-xs px-2.5 py-1 rounded-full border font-medium ${uncertaintyBadge.bg}`}
+          className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold ${uncertaintyConfig.bg}`}
         >
-          {uncertaintyBadge.label}
+          {uncertaintyConfig.label}
         </span>
       </div>
 
       {isSuccess && probability !== null ? (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           <div>
-            <div className="flex justify-between items-baseline mb-1">
-              <span className="text-xs font-semibold text-slate-600">
+            <div className="flex justify-between items-baseline mb-1.5">
+              <span className="text-xs font-semibold text-navy-foreground">
                 Calibrated Probability {probability_of ? `(of ${probability_of})` : ''}
               </span>
-              <span className="text-2xl font-black text-teal-600">
+              <span className="text-2xl font-black text-teal-700 font-mono tabular-nums">
                 {formatProbability(probability)}
               </span>
             </div>
-            {/* Progress bar strictly when non-null */}
-            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-border/50">
               <div
-                className="bg-teal-600 h-2.5 rounded-full transition-all duration-500"
+                className="bg-teal-700 h-2 rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(100, Math.max(0, probability * 100))}%` }}
-              ></div>
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-            <div>
-              <span className="text-slate-400 block">Raw Model Score</span>
-              <span className="font-semibold text-slate-700 font-mono">
+          <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-border/60 text-xs">
+            <div className="p-2.5 bg-canvas rounded-[8px] border border-border/60">
+              <span className="text-navy-muted block text-[11px]">Raw Model Logit/Score</span>
+              <span className="font-bold text-navy-foreground font-mono tabular-nums text-sm">
                 {formatScore(raw_score)}
               </span>
             </div>
-            <div>
-              <span className="text-slate-400 block">Uncertainty Metric</span>
-              <span className="font-semibold text-slate-700 font-mono">
+            <div className="p-2.5 bg-canvas rounded-[8px] border border-border/60">
+              <span className="text-navy-muted block text-[11px]">Uncertainty Index</span>
+              <span className="font-bold text-navy-foreground font-mono tabular-nums text-sm">
                 {uncertainty.value !== null ? uncertainty.value.toFixed(3) : 'Not evaluated'}
               </span>
               {uncertainty.method && (
-                <span className="text-[10px] text-slate-400 block">
+                <span className="text-[10px] text-navy-muted block truncate mt-0.5">
                   {uncertainty.method}
                 </span>
               )}
             </div>
           </div>
+
+          <p className="text-[11px] text-navy-muted leading-relaxed">
+            {uncertaintyConfig.desc}
+          </p>
         </div>
       ) : (
-        <div className="py-4 text-center bg-slate-50 rounded-xl border border-slate-200">
-          <p className="text-xs font-medium text-slate-500">
-            Probability metric: <span className="font-semibold">Not evaluated / Suppressed</span>
+        <div className="py-4 px-3 text-center bg-canvas rounded-[10px] border border-border">
+          <p className="text-xs font-medium text-navy-muted">
+            Probability Metric: <strong className="text-navy-foreground">Not evaluated / Suppressed</strong>
           </p>
           {abstained && (
-            <p className="text-[11px] text-amber-700 mt-1">
-              Safety abstention active &middot; Model did not commit to confidence output
+            <p className="text-[11px] text-clinical-warning font-medium mt-1">
+              Safety Abstention Policy Active &middot; Model did not commit to confidence output
             </p>
           )}
         </div>
       )}
 
-      {/* Mandatory clinical safety disclaimer */}
-      <div className="mt-4 pt-3 border-t border-slate-100 flex items-start gap-1.5 text-[11px] text-slate-500">
-        <HelpCircle className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+      {/* Safety Notice */}
+      <div className="pt-2 border-t border-border/60 flex items-start gap-1.5 text-[11px] text-navy-muted leading-tight">
+        <HelpCircle className="w-3.5 h-3.5 text-navy-muted flex-shrink-0 mt-0.5" />
         <span>
-          High probability does not mean clinical reliability. Calibrated probabilities reflect statistical dataset alignment, not verified medical pathology.
+          High statistical probability does not constitute clinical certainty. Calibrated probabilities reflect dataset convergence, not verified medical status.
         </span>
       </div>
     </div>

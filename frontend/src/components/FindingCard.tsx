@@ -11,43 +11,43 @@ export const FindingCard: React.FC<FindingCardProps> = ({ analysis }) => {
   const isSuccess = analysis.status === 'success';
 
   if (!isSuccess) {
-    // Non-success states: show NO finding text and NO probability
+    // Non-success states: strictly suppress finding and probability
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-        <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-          <StatusBadge status={analysis.status} size="lg" />
-          <span className="text-xs font-mono text-slate-400">
-            ID: {analysis.request_id.slice(0, 8)}...
+      <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs">
+        <div className="flex items-center justify-between gap-3 mb-3.5 flex-wrap">
+          <StatusBadge status={analysis.status} size="md" />
+          <span className="text-[11px] font-mono text-navy-muted">
+            REQ: {analysis.request_id.slice(0, 8)}
           </span>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3.5">
+        <div className="p-4 rounded-[10px] bg-canvas border border-border flex items-start gap-3">
           {analysis.status === 'uncertain' && (
-            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-clinical-warning flex-shrink-0 mt-0.5" />
           )}
           {analysis.status === 'poor_quality' && (
-            <ImageOff className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+            <ImageOff className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           )}
           {analysis.status === 'ood' && (
-            <Compass className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+            <Compass className="w-5 h-5 text-purple-700 flex-shrink-0 mt-0.5" />
           )}
           {(analysis.status === 'model_unavailable' ||
             analysis.status === 'error' ||
             analysis.status === 'invalid_input') && (
-            <AlertOctagon className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <AlertOctagon className="w-5 h-5 text-clinical-danger flex-shrink-0 mt-0.5" />
           )}
 
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">
+            <h3 className="text-sm font-semibold text-navy-foreground">
               {analysis.triage.title}
             </h3>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-xs text-navy-muted mt-1 leading-relaxed">
               {analysis.triage.message}
             </p>
             {analysis.triage.reasons.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {analysis.triage.reasons.map((r, i) => (
-                  <li key={i} className="text-xs text-slate-500 list-disc list-inside">
+                  <li key={i} className="text-[11px] text-navy-muted list-disc list-inside">
                     {r}
                   </li>
                 ))}
@@ -56,7 +56,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ analysis }) => {
           </div>
         </div>
 
-        <p className="mt-4 text-xs text-slate-500 italic">
+        <p className="mt-3 text-[11px] text-navy-muted italic">
           No definitive finding or probability is displayed for abstained or rejected inputs.
         </p>
       </div>
@@ -64,35 +64,35 @@ export const FindingCard: React.FC<FindingCardProps> = ({ analysis }) => {
   }
 
   // Success state
-  const findingLabel = analysis.finding === 'pneumonia' ? 'Pneumonia Pattern' : 'Normal / Unremarkable';
-  const findingColor =
-    analysis.finding === 'pneumonia'
-      ? 'text-amber-800 bg-amber-50 border-amber-300'
-      : 'text-emerald-800 bg-emerald-50 border-emerald-300';
+  const isPneumonia = analysis.finding === 'pneumonia';
+  const findingLabel = isPneumonia ? 'Pneumonia Pattern Detected' : 'Normal / Unremarkable Lung Fields';
+  const themeClasses = isPneumonia
+    ? 'text-[#92400E] bg-[#FFFBEB] border-amber-200'
+    : 'text-[#065F46] bg-[#ECFDF5] border-emerald-200';
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-      <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-        <StatusBadge status={analysis.status} size="lg" />
-        <span className="text-xs font-mono text-slate-400">
-          ID: {analysis.request_id.slice(0, 8)}...
+    <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs">
+      <div className="flex items-center justify-between gap-3 mb-3.5 flex-wrap">
+        <StatusBadge status={analysis.status} size="md" />
+        <span className="text-[11px] font-mono text-navy-muted">
+          REQ: {analysis.request_id.slice(0, 8)}
         </span>
       </div>
 
-      <div className="mt-2">
-        <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 block">
+      <div className="mt-1">
+        <span className="text-[11px] uppercase tracking-wider font-semibold text-navy-muted block mb-1.5">
           Model Finding (Educational)
         </span>
-        <div className={`mt-2 p-4 rounded-xl border flex items-center justify-between gap-4 ${findingColor}`}>
+        <div className={`p-4 rounded-[10px] border flex items-center justify-between gap-4 ${themeClasses}`}>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">
+            <h2 className="text-lg font-bold tracking-tight">
               {findingLabel}
             </h2>
-            <p className="text-xs mt-1 text-slate-600">
-              Predicted classification for instructional review.
+            <p className="text-xs mt-0.5 opacity-90">
+              Statistical class alignment for instructional review &middot; Non-diagnostic
             </p>
           </div>
-          <CheckCircle2 className="w-7 h-7 flex-shrink-0 opacity-80" />
+          <CheckCircle2 className="w-6 h-6 flex-shrink-0 opacity-90" />
         </div>
       </div>
     </div>

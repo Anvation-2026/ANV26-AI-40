@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { UploadCloud, FileImage, AlertCircle } from 'lucide-react';
+import { UploadCloud, AlertCircle, ShieldAlert } from 'lucide-react';
 
 interface ImageUploaderProps {
   onFileSelected: (file: File) => void;
@@ -13,14 +13,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onFileSelected,
   disabled = false,
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [clientError, setClientError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateAndPass = (file: File) => {
     setClientError(null);
 
-    // Format pre-check
     const isExtensionMatch = /\.(png|jpe?g|webp)$/i.test(file.name);
     const isMimeMatch = ALLOWED_MIME.includes(file.type);
     if (!isExtensionMatch && !isMimeMatch) {
@@ -28,14 +27,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       return;
     }
 
-    // Size pre-check
     if (file.size > MAX_BYTES) {
       setClientError('Image size exceeds the 10 MB maximum limit.');
       return;
     }
 
     if (file.size === 0) {
-      setClientError('Selected file is empty.');
+      setClientError('Selected file is empty (0 bytes).');
       return;
     }
 
@@ -86,18 +84,18 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
-        aria-label="Upload chest X-ray image for educational analysis"
+        aria-label="Upload chest X-ray image for educational decision support"
         onKeyDown={handleKeyDown}
         onClick={triggerSelect}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-teal-500/20 ${
+        className={`relative border-2 border-dashed rounded-[12px] p-8 text-center transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-600 ${
           disabled
-            ? 'opacity-50 cursor-not-allowed bg-slate-100 border-slate-300'
+            ? 'opacity-50 cursor-not-allowed bg-slate-100 border-border'
             : isDragging
-            ? 'border-teal-500 bg-teal-50/70 scale-[0.99]'
-            : 'border-slate-300 hover:border-teal-500 hover:bg-slate-50/80 bg-white'
+            ? 'border-teal-600 bg-teal-50/50 scale-[0.995]'
+            : 'border-border hover:border-teal-600 hover:bg-slate-50/80 bg-surface'
         }`}
       >
         <input
@@ -110,30 +108,30 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           aria-hidden="true"
         />
 
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mb-4 border border-teal-100 shadow-2xs">
-          <UploadCloud className="w-7 h-7" />
+        <div className="mx-auto w-12 h-12 rounded-[10px] bg-teal-50 text-teal-700 flex items-center justify-center mb-3.5 border border-teal-100 shadow-2xs">
+          <UploadCloud className="w-6 h-6" />
         </div>
 
-        <p className="text-base font-semibold text-slate-800 mb-1">
-          Drop an educational chest X-ray here, or{' '}
-          <span className="text-teal-600 underline underline-offset-2">browse</span>
+        <p className="text-sm font-semibold text-navy-foreground mb-1">
+          Drop an educational chest radiograph here, or{' '}
+          <span className="text-teal-700 underline underline-offset-2">browse</span>
         </p>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+        <p className="text-xs text-navy-muted max-w-sm mx-auto">
           Supported formats: PNG, JPEG, WEBP &middot; Max file size: 10 MB
         </p>
 
-        <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full text-slate-600 text-xs">
-          <FileImage className="w-3.5 h-3.5" />
-          <span>Use public or de-identified educational images only</span>
+        <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-canvas rounded-full text-navy-muted text-[11px] border border-border/80">
+          <ShieldAlert className="w-3.5 h-3.5 text-teal-700" />
+          <span>Upload only public or de-identified educational images</span>
         </div>
       </div>
 
       {clientError && (
         <div
           role="alert"
-          className="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-center gap-2"
+          className="mt-3 p-3 bg-rose-50 border border-rose-200 text-clinical-danger text-xs rounded-[10px] flex items-center gap-2"
         >
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+          <AlertCircle className="w-4 h-4 flex-shrink-0 text-clinical-danger" />
           <span>{clientError}</span>
         </div>
       )}

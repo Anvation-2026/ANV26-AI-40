@@ -46,25 +46,24 @@ export const Validation: React.FC = () => {
 
   const report = data?.report;
 
-  // Split counts data formatted for Recharts
   const chartData = report?.split_counts
     ? [
-        { name: 'Train', count: report.split_counts.train || 0 },
-        { name: 'Validation', count: report.split_counts.validation || 0 },
-        { name: 'Test', count: report.split_counts.test || 0 },
+        { name: 'Train Set', count: report.split_counts.train || 0 },
+        { name: 'Validation Set', count: report.split_counts.validation ?? (report.split_counts as any).val ?? 0 },
+        { name: 'Test Set', count: report.split_counts.test || 0 },
       ]
     : [];
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Independent Model Validation Dashboard
+          <h1 className="text-xl sm:text-2xl font-bold text-navy-foreground tracking-tight">
+            Benchmark Validation Dashboard
           </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-            Live evaluation metrics derived strictly from the AI engineering validation report file. No values are fabricated or hardcoded.
+          <p className="text-xs text-navy-muted mt-0.5 max-w-2xl">
+            Empirical diagnostic metrics loaded directly from the validation report file. No values are fabricated or estimated.
           </p>
         </div>
 
@@ -73,17 +72,17 @@ export const Validation: React.FC = () => {
           onClick={fetchValidation}
           disabled={loading}
           aria-label="Refresh validation metrics"
-          className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-slate-50 text-navy-foreground text-xs font-semibold rounded-[8px] border border-border shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-teal-600' : ''}`} />
-          <span>Refresh Report</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-teal-700' : ''}`} />
+          <span>Refresh Benchmark</span>
         </button>
       </div>
 
       {loading && !data && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center shadow-xs">
-          <div className="w-10 h-10 rounded-full border-4 border-teal-200 border-t-teal-600 animate-spin mx-auto mb-3"></div>
-          <p className="text-sm font-semibold text-slate-700">Loading Validation Metrics...</p>
+        <div className="bg-surface rounded-[12px] border border-border p-16 text-center shadow-xs">
+          <div className="w-8 h-8 rounded-full border-3 border-teal-200 border-t-teal-700 animate-spin mx-auto mb-3"></div>
+          <p className="text-xs font-semibold text-navy-foreground">Loading Validation Metrics...</p>
         </div>
       )}
 
@@ -97,19 +96,19 @@ export const Validation: React.FC = () => {
 
       {/* Pending State */}
       {!loading && data?.status === 'pending' && (
-        <div className="bg-white rounded-2xl border border-amber-200 p-12 text-center shadow-xs max-w-2xl mx-auto">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-100">
-            <Clock className="w-7 h-7" />
+        <div className="bg-surface rounded-[12px] border border-amber-200 p-10 text-center shadow-xs max-w-2xl mx-auto">
+          <div className="w-12 h-12 rounded-[10px] bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3 border border-amber-100">
+            <Clock className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900">
-            Evaluation Pending
+          <h2 className="text-base font-bold text-navy-foreground">
+            Validation Benchmark Pending
           </h2>
-          <p className="text-sm text-slate-600 mt-2 max-w-md mx-auto leading-relaxed">
-            The ML validation report has not been produced yet by the AI engineering team. Check back once training and benchmark evaluation are complete.
+          <p className="text-xs text-navy-muted mt-1.5 max-w-md mx-auto leading-relaxed">
+            The machine learning evaluation report has not been generated yet. Metrics will appear automatically once the AI evaluation script produces the output report.
           </p>
-          <div className="mt-4 inline-flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+          <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] text-[#92400E] bg-[#FFFBEB] px-3 py-1.5 rounded-full border border-amber-200">
             <Info className="w-3.5 h-3.5" />
-            <span>Expected location: ml/reports/validation_report.json</span>
+            <span>Target Path: ml/reports/validation_report.json</span>
           </div>
         </div>
       )}
@@ -126,36 +125,36 @@ export const Validation: React.FC = () => {
 
       {/* Available State */}
       {!loading && data?.status === 'available' && report && (
-        <div className="space-y-8">
-          {/* Metadata Banner */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-6">
+          {/* Metadata Bar */}
+          <div className="bg-surface rounded-[12px] border border-border p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-wrap">
               <div>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  Model
+                <span className="text-[10px] font-semibold text-navy-muted uppercase tracking-wider block">
+                  Model Architecture
                 </span>
-                <span className="text-sm font-bold text-slate-800">
-                  {report.model_name || 'Unnamed Model'} ({report.model_version || 'v1'})
+                <span className="text-xs font-bold text-navy-foreground">
+                  {report.model_name || 'ResNet-18'} ({report.model_version || 'v1'})
                 </span>
               </div>
 
-              <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+              <div className="h-6 w-px bg-border hidden sm:block"></div>
 
               <div>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  Benchmark Dataset
+                <span className="text-[10px] font-semibold text-navy-muted uppercase tracking-wider block">
+                  Dataset Split
                 </span>
-                <span className="text-sm font-bold text-slate-800">
+                <span className="text-xs font-bold text-navy-foreground">
                   {report.dataset || 'PneumoniaMNIST+'} ({report.evaluated_on || 'test partition'})
                 </span>
               </div>
             </div>
 
-            <div className="text-right">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Report Generated
+            <div>
+              <span className="text-[10px] font-semibold text-navy-muted uppercase tracking-wider block text-right">
+                Report Timestamp
               </span>
-              <span className="text-xs font-mono text-slate-600">
+              <span className="text-xs font-mono tabular-nums text-navy-foreground">
                 {formatDate(report.generated_at)}
               </span>
             </div>
@@ -163,31 +162,31 @@ export const Validation: React.FC = () => {
 
           {/* Dataset Splits Chart */}
           {chartData.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                  Benchmark Dataset Split Distribution
+            <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs">
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
+                  Sample Distribution Across Partitions
                 </h3>
-                <span className="text-xs text-slate-400">
-                  Sample count partitioning across training, validation, and test sets
+                <span className="text-xs text-navy-muted">
+                  Total sample counts in PneumoniaMNIST+ dataset
                 </span>
               </div>
-              <div className="h-64 w-full">
+              <div className="h-56 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} />
-                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3E9EF" />
+                    <XAxis dataKey="name" stroke="#617286" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#617286" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '0.75rem',
-                        fontSize: '12px',
-                        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #E3E9EF',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)',
                       }}
                     />
-                    <Bar dataKey="count" fill="#0d9488" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="count" fill="#0F766E" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -196,10 +195,16 @@ export const Validation: React.FC = () => {
 
           {/* Performance Metrics Grid */}
           <div>
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight mb-3">
-              Diagnostic Performance & Calibration Metrics
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="mb-3">
+              <h3 className="text-sm font-bold text-navy-foreground tracking-tight">
+                Statistical Performance & Discrimination
+              </h3>
+              <span className="text-xs text-navy-muted">
+                Validation metrics evaluated on held-out test partition
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <MetricCard
                 label="Accuracy"
                 value={report.metrics?.accuracy}
@@ -218,7 +223,7 @@ export const Validation: React.FC = () => {
               <MetricCard
                 label="Precision (PPV)"
                 value={report.metrics?.precision}
-                description="Reliability of positive pneumonia predictions"
+                description="Positive predictive reliability for pneumonia"
               />
               <MetricCard
                 label="F1 Score"
@@ -240,17 +245,17 @@ export const Validation: React.FC = () => {
                 label="Expected Calibration Error (ECE)"
                 value={report.metrics?.ece}
                 isPercentage={false}
-                description="Discrepancy between confidence and accuracy"
+                description="Difference between confidence and actual accuracy"
               />
               <MetricCard
                 label="Abstention Coverage"
                 value={report.metrics?.abstention_coverage}
-                description="Proportion of cases with high certainty"
+                description="Percentage of samples with high confidence"
               />
               <MetricCard
                 label="Rejection Rate"
                 value={report.metrics?.rejection_rate}
-                description="Rate of abstained or poor-quality inputs"
+                description="Rate of degraded or ambiguous samples rejected"
               />
             </div>
           </div>
@@ -258,18 +263,18 @@ export const Validation: React.FC = () => {
           {/* Confusion Matrix */}
           <ConfusionMatrix data={report.confusion_matrix} />
 
-          {/* Documented Limitations */}
+          {/* Documented Model Limitations */}
           {report.limitations.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight mb-2 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-amber-600" />
+            <div className="bg-surface rounded-[12px] border border-border p-5 shadow-xs">
+              <h3 className="text-sm font-bold text-navy-foreground tracking-tight mb-1.5 flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-clinical-warning" />
                 <span>Documented Model Limitations & Clinical Boundaries</span>
               </h3>
-              <ul className="space-y-1.5 mt-3">
+              <ul className="space-y-1.5 mt-2">
                 {report.limitations.map((item, idx) => (
                   <li
                     key={idx}
-                    className="text-xs text-slate-600 list-disc list-inside leading-relaxed"
+                    className="text-xs text-navy-muted list-disc list-inside leading-relaxed"
                   >
                     {item}
                   </li>

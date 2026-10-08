@@ -14,42 +14,48 @@ export class NetworkError extends Error {
   }
 }
 
+async function handleResponse<T>(res: Response, endpointDesc: string): Promise<T> {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    // Likely a Vite proxy connection error (ECONNREFUSED) which returns HTML/plain text 500
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
+  }
+
+  const data = await res.json();
+  if (!res.ok) {
+    const errorMsg = data?.message || data?.detail || `${endpointDesc} returned status ${res.status}`;
+    throw new NetworkError(errorMsg);
+  }
+  return data as T;
+}
+
 export async function getHealth(): Promise<HealthResponse> {
   try {
     const res = await fetch(`${API_BASE}/api/health`);
-    if (!res.ok) {
-      throw new NetworkError(`Health check failed with HTTP ${res.status}`);
-    }
-    return await res.json();
+    return await handleResponse<HealthResponse>(res, 'Health check');
   } catch (err: any) {
     if (err instanceof NetworkError) throw err;
-    throw new NetworkError('Backend unreachable — please verify the API server is running.');
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
   }
 }
 
 export async function getModelStatus(): Promise<ModelStatusResponse> {
   try {
     const res = await fetch(`${API_BASE}/api/model/status`);
-    if (!res.ok) {
-      throw new NetworkError(`Model status failed with HTTP ${res.status}`);
-    }
-    return await res.json();
+    return await handleResponse<ModelStatusResponse>(res, 'Model status');
   } catch (err: any) {
     if (err instanceof NetworkError) throw err;
-    throw new NetworkError('Backend unreachable — could not retrieve model status.');
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
   }
 }
 
 export async function getValidation(): Promise<ValidationResponse> {
   try {
     const res = await fetch(`${API_BASE}/api/validation`);
-    if (!res.ok) {
-      throw new NetworkError(`Validation fetch failed with HTTP ${res.status}`);
-    }
-    return await res.json();
+    return await handleResponse<ValidationResponse>(res, 'Validation report');
   } catch (err: any) {
     if (err instanceof NetworkError) throw err;
-    throw new NetworkError('Backend unreachable — could not load validation metrics.');
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
   }
 }
 
@@ -78,7 +84,7 @@ export async function predictImage(
     if (err.name === 'AbortError') {
       throw err;
     }
-    throw new NetworkError('Backend unreachable — failed to connect to analysis server.');
+    throw new NetworkError('API server offline — failed to reach analysis endpoint on port 8000.');
   }
 
   // Parse JSON response. Note: all responses (200, 400, 413, 415, 500, 503) return AnalysisResponse structure
@@ -86,7 +92,7 @@ export async function predictImage(
   try {
     data = await res.json();
   } catch {
-    throw new NetworkError(`Server responded with HTTP ${res.status} but returned non-JSON content.`);
+    throw new NetworkError('API server offline or invalid response from port 8000.');
   }
 
   return data as AnalysisResponse;
