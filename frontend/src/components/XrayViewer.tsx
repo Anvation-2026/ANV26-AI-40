@@ -16,6 +16,7 @@ import {
   FileUp,
 } from 'lucide-react';
 import { HeatmapInfo } from '../types/analysis';
+import { SAMPLE_PRESETS } from '../services/sampleAssets';
 
 export interface XrayViewerProps {
   originalUrl: string | null;
@@ -518,41 +519,23 @@ export const XrayViewer: React.FC<XrayViewerProps> = ({
                       Or Load Educational Sample
                     </span>
                     <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => onLoadSample('/assets/sample-normal.png', 'sample-normal.png')}
-                        className="px-2.5 py-1 text-[11px] font-medium text-slate-200 bg-[#122434] hover:bg-teal-900/60 hover:text-teal-300 border border-white/10 rounded-[6px] transition-all"
-                      >
-                        Normal
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLoadSample('/assets/sample-pneumonia.png', 'sample-pneumonia.png')}
-                        className="px-2.5 py-1 text-[11px] font-medium text-slate-200 bg-[#122434] hover:bg-teal-900/60 hover:text-teal-300 border border-white/10 rounded-[6px] transition-all"
-                      >
-                        Pneumonia
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLoadSample('/assets/demo-uncertain.png', 'sample-uncertain.png')}
-                        className="px-2.5 py-1 text-[11px] font-medium text-amber-300 bg-[#122434] hover:bg-amber-950/60 hover:text-amber-200 border border-amber-500/30 rounded-[6px] transition-all"
-                      >
-                        Uncertain
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLoadSample('/assets/demo-blurred.png', 'sample-blurred.png')}
-                        className="px-2.5 py-1 text-[11px] font-medium text-slate-400 bg-[#122434] hover:bg-slate-700/60 hover:text-slate-200 border border-white/10 rounded-[6px] transition-all"
-                      >
-                        Blur Test
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLoadSample('/assets/demo-ood.png', 'sample-ood.png')}
-                        className="px-2.5 py-1 text-[11px] font-medium text-slate-400 bg-[#122434] hover:bg-slate-700/60 hover:text-slate-200 border border-white/10 rounded-[6px] transition-all"
-                      >
-                        OOD Test
-                      </button>
+                      {SAMPLE_PRESETS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => onLoadSample(preset.assetUrl, preset.filename)}
+                          className={`px-2.5 py-1 text-[11px] font-medium border rounded-[6px] transition-all ${
+                            preset.category === 'uncertain'
+                              ? 'text-amber-300 bg-[#122434] hover:bg-amber-950/60 hover:text-amber-200 border-amber-500/30'
+                              : preset.category === 'normal' || preset.category === 'pneumonia'
+                              ? 'text-slate-200 bg-[#122434] hover:bg-teal-900/60 hover:text-teal-300 border-white/10'
+                              : 'text-slate-400 bg-[#122434] hover:bg-slate-700/60 hover:text-slate-200 border-white/10'
+                          }`}
+                          title={preset.description}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}

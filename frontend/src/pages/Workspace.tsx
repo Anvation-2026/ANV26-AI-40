@@ -10,6 +10,7 @@ import { DemoModeBanner } from '../components/DemoModeBanner';
 import { useToast } from '../components/Toast';
 import { getModelStatus, predictImage, NetworkError } from '../services/api';
 import { saveRecentAnalysis } from '../services/history';
+import { loadSampleAsset, SAMPLE_PRESETS } from '../services/sampleAssets';
 import { AnalysisResponse, ModelStatusResponse } from '../types/analysis';
 
 export const Workspace: React.FC = () => {
@@ -71,9 +72,7 @@ export const Workspace: React.FC = () => {
 
   const loadSamplePreset = async (url: string, name: string) => {
     try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const file = new File([blob], name, { type: 'image/png' });
+      const file = await loadSampleAsset(url, name);
       handleFileSelected(file);
     } catch {
       showToast('Could not load sample asset', 'error');
@@ -164,50 +163,28 @@ export const Workspace: React.FC = () => {
 
         {/* Right: Quick Samples & Primary Actions */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             <span className="text-[11px] font-medium text-navy-muted mr-1 hidden lg:inline">
               Samples:
             </span>
-            <button
-              type="button"
-              onClick={() => loadSamplePreset('/assets/sample-normal.png', 'sample-normal.png')}
-              disabled={loading}
-              className="px-2.5 py-1 text-[11px] font-medium text-navy-foreground bg-canvas hover:bg-slate-200/80 active:scale-95 border border-border rounded-[6px] transition-all"
-            >
-              Normal
-            </button>
-            <button
-              type="button"
-              onClick={() => loadSamplePreset('/assets/sample-pneumonia.png', 'sample-pneumonia.png')}
-              disabled={loading}
-              className="px-2.5 py-1 text-[11px] font-medium text-navy-foreground bg-canvas hover:bg-slate-200/80 active:scale-95 border border-border rounded-[6px] transition-all"
-            >
-              Pneumonia
-            </button>
-            <button
-              type="button"
-              onClick={() => loadSamplePreset('/assets/demo-uncertain.png', 'sample-uncertain.png')}
-              disabled={loading}
-              className="px-2.5 py-1 text-[11px] font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 active:scale-95 border border-amber-200 rounded-[6px] transition-all"
-            >
-              Uncertain
-            </button>
-            <button
-              type="button"
-              onClick={() => loadSamplePreset('/assets/demo-blurred.png', 'sample-blurred.png')}
-              disabled={loading}
-              className="px-2.5 py-1 text-[11px] font-medium text-navy-muted hover:text-navy-foreground bg-canvas hover:bg-slate-200/80 active:scale-95 border border-border rounded-[6px] transition-all"
-            >
-              Blur Test
-            </button>
-            <button
-              type="button"
-              onClick={() => loadSamplePreset('/assets/demo-ood.png', 'sample-ood.png')}
-              disabled={loading}
-              className="px-2.5 py-1 text-[11px] font-medium text-navy-muted hover:text-navy-foreground bg-canvas hover:bg-slate-200/80 active:scale-95 border border-border rounded-[6px] transition-all"
-            >
-              OOD Test
-            </button>
+            {SAMPLE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => loadSamplePreset(preset.assetUrl, preset.filename)}
+                disabled={loading}
+                className={`px-2.5 py-1 text-[11px] font-medium active:scale-95 border rounded-[6px] transition-all ${
+                  preset.category === 'uncertain'
+                    ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-200'
+                    : preset.category === 'normal' || preset.category === 'pneumonia'
+                    ? 'text-navy-foreground bg-canvas hover:bg-slate-200/80 border-border'
+                    : 'text-navy-muted hover:text-navy-foreground bg-canvas hover:bg-slate-200/80 border-border'
+                }`}
+                title={preset.description}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
 
           <div className="h-4 w-px bg-border hidden sm:block mx-0.5" />

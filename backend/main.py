@@ -59,6 +59,12 @@ def create_app() -> FastAPI:
     app.include_router(prediction_router)
     app.include_router(validation_router)
 
+    # Mount static assets if directory exists
+    public_assets = REPO_ROOT / "frontend" / "public" / "assets"
+    if public_assets.is_dir():
+        from fastapi.staticfiles import StaticFiles
+        app.mount("/assets", StaticFiles(directory=str(public_assets)), name="assets")
+
     # Catch-all exception handler
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
