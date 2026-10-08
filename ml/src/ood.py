@@ -55,17 +55,19 @@ def extract_features(
         batch_tensor = torch.stack(tensors).to(device)
 
         with torch.no_grad():
-            # Extract penultimate features (avgpool output)
-            x = model.conv1(batch_tensor)
-            x = model.bn1(x)
-            x = model.relu(x)
-            x = model.maxpool(x)
-            x = model.layer1(x)
-            x = model.layer2(x)
-            x = model.layer3(x)
-            x = model.layer4(x)
-            x = model.avgpool(x)
-            feats = torch.flatten(x, 1)
+            if hasattr(model, "extract_features"):
+                feats = model.extract_features(batch_tensor)
+            else:
+                x = model.conv1(batch_tensor)
+                x = model.bn1(x)
+                x = model.relu(x)
+                x = model.maxpool(x)
+                x = model.layer1(x)
+                x = model.layer2(x)
+                x = model.layer3(x)
+                x = model.layer4(x)
+                x = model.avgpool(x)
+                feats = torch.flatten(x, 1)
         all_feats.append(feats.cpu().numpy())
 
     return np.concatenate(all_feats, axis=0) if all_feats else np.zeros((0, 512))
@@ -126,11 +128,23 @@ def check_modality_color(image) -> bool:
         return False
 
 
+def normalize_features(feats: np.ndarray) -> np.ndarray:
+    """
+    L2-normalizes features along the feature dimension to map onto the unit hypersphere.
+    Stabilizes condition number and prevents high-contrast scanner variance from triggering false OOD.
+    """
+    if feats.ndim == 1:
+        norm = np.linalg.norm(feats)
+        return feats / (norm + 1e-8)
+    norms = np.linalg.norm(feats, axis=1, keepdims=True)
+    return feats / (norms + 1e-8)
+
+
 class OODDetector:
     """
     Two-layer OOD detector:
     1. Modality pre-check (color image)
-    2. Feature-space Mahalanobis distance
+    2. Feature-space Mahalanobis distance with L2-normalized representations
     """
 
     def __init__(self, ood_stats_path: Path, thresholds_path: Optional[Path] = None):
@@ -145,11 +159,11 @@ class OODDetector:
         self.ood_percentile = float(stats["ood_percentile"])
 
     def mahalanobis_score(self, features: np.ndarray) -> float:
-        """Computes minimum Mahalanobis distance over class means."""
+        """Computes minimum Mahalanobis distance over class means with L2 normalization."""
         min_dist = float("inf")
-        diff_flat = features.flatten()
+        feat_norm = normalize_features(features.flatten())
         for mean in self.class_means:
-            diff = diff_flat - mean
+            diff = feat_norm - mean
             try:
                 dist = float(diff @ self.precision_matrix @ diff) ** 0.5
             except Exception:
@@ -203,7 +217,8 @@ def fit_ood_detector(
     ood_percentile: float = DEFAULT_OOD_PERCENTILE,
 ) -> None:
     """
-    Fits class-conditional Mahalanobis OOD detector on training features.
+    Fits class-conditional Mahalanobis OOD detector on training features with L2-normalization
+    and ridge-regularized Ledoit-Wolf covariance.
     Threshold is set from validation in-distribution scores.
     """
     device_str = "cuda" if torch.cuda.is_available() else "cpu"
@@ -214,27 +229,31 @@ def fit_ood_detector(
     train_images, train_labels = get_split("train", DATASET_PATH)
     train_labels_flat = train_labels.squeeze()
 
-    train_feats = extract_features(model, train_images, device)
-    print(f"[OOD] Extracted {len(train_feats)} training features (dim={train_feats.shape[1]})")
+    raw_train_feats = extract_features(model, train_images, device)
+    train_feats = normalize_features(raw_train_feats)
+    print(f"[OOD] Extracted and L2-normalized {len(train_feats)} training features (dim={train_feats.shape[1]})")
 
-    # Class-conditional means
+    # Class-conditional means on unit hypersphere
     feats_class0 = train_feats[train_labels_flat == 0]
     feats_class1 = train_feats[train_labels_flat == 1]
 
     mean_0 = feats_class0.mean(axis=0)
     mean_1 = feats_class1.mean(axis=0)
 
-    # Shared tied covariance (LedoitWolf shrinkage)
-    print("[OOD] Fitting shared covariance matrix (LedoitWolf)...")
+    # Shared tied covariance (LedoitWolf shrinkage + ridge regularization)
+    print("[OOD] Fitting shared covariance matrix (LedoitWolf + ridge regularization)...")
     lw = LedoitWolf()
     lw.fit(train_feats)
     cov_matrix = lw.covariance_
-    precision_matrix = np.linalg.pinv(cov_matrix)
+    d = cov_matrix.shape[0]
+    # Ridge regularization: adds 5% trace variance to guarantee well-conditioned precision matrix
+    cov_reg = cov_matrix + 0.05 * np.eye(d) * (np.trace(cov_matrix) / d)
+    precision_matrix = np.linalg.inv(cov_reg)
 
     # Compute val in-distribution scores
     print("[OOD] Extracting validation features for threshold fitting...")
     val_images, _ = get_split("val", DATASET_PATH)
-    val_feats = extract_features(model, val_images, device)
+    val_feats = normalize_features(extract_features(model, val_images, device))
 
     val_scores = []
     for feat in val_feats:
@@ -305,18 +324,7 @@ def evaluate_ood(
 
     def score_images(images: np.ndarray) -> np.ndarray:
         feats = extract_features(model, images, device)
-        scores = []
-        for feat in feats:
-            min_dist = float("inf")
-            for mean in detector.class_means:
-                diff = feat - mean
-                try:
-                    dist = float(diff @ detector.precision_matrix @ diff) ** 0.5
-                except Exception:
-                    dist = float("inf")
-                min_dist = min(min_dist, dist)
-            scores.append(min_dist)
-        return np.array(scores)
+        return np.array([detector.mahalanobis_score(feat) for feat in feats])
 
     # In-distribution: val and test
     val_images, _ = get_split("val", DATASET_PATH)
@@ -346,13 +354,7 @@ def evaluate_ood(
     }
 
     # Proxy OOD Set A: Random noise and blank images
-    rng = np.random.RandomState(42)
-    noise_images = rng.randint(0, 255, size=(200, 224, 224), dtype=np.uint8)
-    blank_images = np.zeros((50, 224, 224), dtype=np.uint8)
-    all_noise_blank = np.concatenate([noise_images, blank_images], axis=0)
     from sklearn.metrics import roc_auc_score
-
-    # Proxy OOD Set A: Random noise and blank images
     rng = np.random.RandomState(42)
     noise_images = rng.randint(0, 255, size=(200, 224, 224), dtype=np.uint8)
     blank_images = np.zeros((50, 224, 224), dtype=np.uint8)

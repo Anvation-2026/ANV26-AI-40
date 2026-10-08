@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
   "provenance": {
-    "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
-    "checkpoint_sha256": "9bda2caa25047bbebaf699e2342ff8c46fedd1ad1884d6c3fab39dcb928ffdd1",
-    "generated_at": "2026-10-08T06:05:34.372489+00:00",
+    "model_version": "resnet18-pneumoniamnist224-v1+2c4f0760",
+    "checkpoint_sha256": "2c4f0760c092ccd9685dbe77f662d893e8a30ca276f13306224ebb7eda06fc8f",
+    "generated_at": "2026-10-08T12:00:44.740392+00:00",
     "seed": 42,
-    "device": "cuda",
+    "device": "cpu",
     "split_sizes": {
       "train": 4708,
       "val": 524,
@@ -48,18 +48,18 @@
     "test": {
       "uncalibrated": {
         "n": 624,
-        "accuracy": 0.9551,
-        "precision": 0.9415,
-        "recall": 0.9897,
-        "sensitivity": 0.9897,
-        "specificity": 0.8974,
-        "f1": 0.965,
-        "auroc": 0.9929,
-        "false_negative_rate": 0.0103,
-        "false_positive_rate": 0.1026,
-        "ece": 0.0349,
-        "brier": 0.0377,
-        "nll": 0.1784,
+        "accuracy": 0.9087,
+        "precision": 0.8742,
+        "recall": 0.9974,
+        "sensitivity": 0.9974,
+        "specificity": 0.7607,
+        "f1": 0.9317,
+        "auroc": 0.9795,
+        "false_negative_rate": 0.0026,
+        "false_positive_rate": 0.2393,
+        "ece": 0.0756,
+        "brier": 0.082,
+        "nll": 0.5985,
         "confusion_matrix": {
           "labels": [
             "normal",
@@ -67,48 +67,48 @@
           ],
           "matrix": [
             [
-              210,
-              24
+              178,
+              56
             ],
             [
-              4,
-              386
+              1,
+              389
             ]
           ]
         },
         "ci": {
           "accuracy": [
-            0.9375,
-            0.9712
+            0.8814,
+            0.9311
           ],
           "sensitivity": [
-            0.9791,
+            0.9918,
             1.0
           ],
           "specificity": [
-            0.8583,
-            0.9342
+            0.7,
+            0.8136
           ],
           "auroc": [
-            0.988,
-            0.9968
+            0.9711,
+            0.991
           ]
         }
       },
       "calibrated": {
         "n": 624,
-        "accuracy": 0.9551,
-        "precision": 0.9415,
-        "recall": 0.9897,
-        "sensitivity": 0.9897,
-        "specificity": 0.8974,
-        "f1": 0.965,
-        "auroc": 0.9929,
-        "false_negative_rate": 0.0103,
-        "false_positive_rate": 0.1026,
-        "ece": 0.0278,
-        "brier": 0.0351,
-        "nll": 0.1325,
+        "accuracy": 0.9087,
+        "precision": 0.8742,
+        "recall": 0.9974,
+        "sensitivity": 0.9974,
+        "specificity": 0.7607,
+        "f1": 0.9317,
+        "auroc": 0.9816,
+        "false_negative_rate": 0.0026,
+        "false_positive_rate": 0.2393,
+        "ece": 0.057,
+        "brier": 0.0744,
+        "nll": 0.3303,
         "confusion_matrix": {
           "labels": [
             "normal",
@@ -116,31 +116,31 @@
           ],
           "matrix": [
             [
-              210,
-              24
+              178,
+              56
             ],
             [
-              4,
-              386
+              1,
+              389
             ]
           ]
         },
         "ci": {
           "accuracy": [
-            0.9375,
-            0.9712
+            0.8814,
+            0.9311
           ],
           "sensitivity": [
-            0.9791,
+            0.9918,
             1.0
           ],
           "specificity": [
-            0.8583,
-            0.9342
+            0.7,
+            0.8136
           ],
           "auroc": [
-            0.988,
-            0.9968
+            0.9711,
+            0.991
           ]
         }
       }
@@ -148,18 +148,18 @@
     "val": {
       "uncalibrated": {
         "n": 524,
-        "accuracy": 0.979,
-        "precision": 0.9948,
-        "recall": 0.9769,
-        "sensitivity": 0.9769,
-        "specificity": 0.9852,
-        "f1": 0.9857,
-        "auroc": 0.999,
-        "false_negative_rate": 0.0231,
-        "false_positive_rate": 0.0148,
-        "ece": 0.0134,
-        "brier": 0.0154,
-        "nll": 0.0612,
+        "accuracy": 0.9752,
+        "precision": 0.9821,
+        "recall": 0.9846,
+        "sensitivity": 0.9846,
+        "specificity": 0.9481,
+        "f1": 0.9833,
+        "auroc": 0.9982,
+        "false_negative_rate": 0.0154,
+        "false_positive_rate": 0.0519,
+        "ece": 0.0172,
+        "brier": 0.0173,
+        "nll": 0.0716,
         "confusion_matrix": {
           "labels": [
             "normal",
@@ -167,48 +167,48 @@
           ],
           "matrix": [
             [
-              133,
-              2
+              128,
+              7
             ],
             [
-              9,
-              380
+              6,
+              383
             ]
           ]
         },
         "ci": {
           "accuracy": [
-            0.9656,
-            0.9905
+            0.9618,
+            0.9866
           ],
           "sensitivity": [
-            0.9613,
-            0.9899
+            0.9721,
+            0.9949
           ],
           "specificity": [
-            0.9624,
-            1.0
+            0.9084,
+            0.9819
           ],
           "auroc": [
-            0.9977,
-            0.9998
+            0.9963,
+            0.9995
           ]
         }
       },
       "calibrated": {
         "n": 524,
-        "accuracy": 0.979,
-        "precision": 0.9948,
-        "recall": 0.9769,
-        "sensitivity": 0.9769,
-        "specificity": 0.9852,
-        "f1": 0.9857,
-        "auroc": 0.999,
-        "false_negative_rate": 0.0231,
-        "false_positive_rate": 0.0148,
-        "ece": 0.0118,
-        "brier": 0.0151,
-        "nll": 0.053,
+        "accuracy": 0.9752,
+        "precision": 0.9821,
+        "recall": 0.9846,
+        "sensitivity": 0.9846,
+        "specificity": 0.9481,
+        "f1": 0.9833,
+        "auroc": 0.9982,
+        "false_negative_rate": 0.0154,
+        "false_positive_rate": 0.0519,
+        "ece": 0.0081,
+        "brier": 0.0152,
+        "nll": 0.0504,
         "confusion_matrix": {
           "labels": [
             "normal",
@@ -216,31 +216,31 @@
           ],
           "matrix": [
             [
-              133,
-              2
+              128,
+              7
             ],
             [
-              9,
-              380
+              6,
+              383
             ]
           ]
         },
         "ci": {
           "accuracy": [
-            0.9656,
-            0.9905
+            0.9618,
+            0.9866
           ],
           "sensitivity": [
-            0.9613,
-            0.9899
+            0.9721,
+            0.9949
           ],
           "specificity": [
-            0.9624,
-            1.0
+            0.9084,
+            0.9819
           ],
           "auroc": [
-            0.9977,
-            0.9998
+            0.9963,
+            0.9995
           ]
         }
       }
@@ -248,35 +248,35 @@
   },
   "calibration": {
     "method": "temperature_scaling",
-    "temperature": 1.5773,
+    "temperature": 2.1718,
     "fitted_on": "val",
     "val": {
-      "ece_before": 0.0134,
-      "ece_after": 0.0118
+      "ece_before": 0.0172,
+      "ece_after": 0.0081
     },
     "test": {
-      "ece_before": 0.0349,
-      "ece_after": 0.0278
+      "ece_before": 0.0756,
+      "ece_after": 0.057
     }
   },
   "selective": {
     "test": {
-      "tau_accept": 0.561777,
-      "tau_low_uncertainty": 0.565799,
-      "coverage": 0.9856,
-      "accepted_accuracy": 0.9577,
-      "accepted_sensitivity": 0.9897,
-      "accepted_specificity": 0.9027,
-      "abstained_count": 9,
+      "tau_accept": 0.506282,
+      "tau_low_uncertainty": 0.561398,
+      "coverage": 1.0,
+      "accepted_accuracy": 0.9087,
+      "accepted_sensitivity": 0.9974,
+      "accepted_specificity": 0.7607,
+      "abstained_count": 0,
       "fallback": false
     },
     "val": {
-      "tau_accept": 0.561777,
-      "tau_low_uncertainty": 0.565799,
+      "tau_accept": 0.506282,
+      "tau_low_uncertainty": 0.561398,
       "coverage": 0.9981,
-      "accepted_accuracy": 0.9809,
-      "accepted_sensitivity": 0.9794,
-      "accepted_specificity": 0.9852,
+      "accepted_accuracy": 0.9771,
+      "accepted_sensitivity": 0.9871,
+      "accepted_specificity": 0.9481,
       "abstained_count": 1,
       "fallback": false
     }
@@ -299,10 +299,10 @@
     "note": "Degraded samples are synthetic; labeled as such. Mild degradations may legitimately pass."
   },
   "ood_eval": {
-    "ood_threshold": 31.99,
+    "ood_threshold": 28.5505,
     "in_distribution": {
-      "val_false_ood_rate": 0.015,
-      "test_false_ood_rate": 0.03
+      "val_false_ood_rate": 0.0,
+      "test_false_ood_rate": 0.005
     },
     "proxy_ood_sets": {
       "random_noise_and_blank": {
@@ -326,25 +326,22 @@
     "note_near_ood": "Near-OOD inputs (adult chest X-rays, other body parts, different scanners) may NOT be reliably detected. OOD rejection is not guaranteed.",
     "proxy_sets_not_used_for_threshold_fitting": true,
     "precedence_experiment": {
-      "order_a_quality_then_ood_correct_rate": 1.0,
-      "order_b_ood_then_quality_correct_rate": 0.69,
+      "order_a_quality_then_ood_correct_rate": 0.98,
+      "order_b_ood_then_quality_correct_rate": 0.57,
       "chosen_ordering": "quality_gate_before_feature_ood",
       "n_samples": 100,
       "note": "Ordering A (Quality then OOD) correctly attributes blur/darkness to image quality rather than misclassifying degraded chest radiographs as non-medical OOD."
     }
   },
   "error_analysis": {
-    "test_total_fn": 4,
+    "test_total_fn": 1,
     "test_fn_abstained": 0,
-    "test_fn_accepted": 4,
-    "test_total_fp": 24,
-    "test_fp_abstained": 2,
-    "test_fp_accepted": 22,
+    "test_fn_accepted": 1,
+    "test_total_fp": 56,
+    "test_fp_abstained": 0,
+    "test_fp_accepted": 56,
     "fn_sample_indices": [
-      88,
-      571,
-      598,
-      604
+      88
     ]
   },
   "limitations": [

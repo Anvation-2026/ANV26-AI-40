@@ -68,7 +68,10 @@ class GradCAM:
 
             # Compute gradients with respect to the target class logit
             self.model.zero_grad()
-            target_score = logits[0, target_class]
+            if logits.shape[1] == 1:
+                target_score = logits[0, 0] if target_class == 1 else -logits[0, 0]
+            else:
+                target_score = logits[0, target_class]
             target_score.backward(retain_graph=False)
 
             # activations: (1, C, H, W); gradients: (1, C, H, W)

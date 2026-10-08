@@ -1,8 +1,8 @@
 {
-  "ood_threshold": 31.99,
+  "ood_threshold": 28.5505,
   "in_distribution": {
-    "val_false_ood_rate": 0.015,
-    "test_false_ood_rate": 0.03
+    "val_false_ood_rate": 0.0,
+    "test_false_ood_rate": 0.005
   },
   "proxy_ood_sets": {
     "random_noise_and_blank": {
@@ -26,8 +26,8 @@
   "note_near_ood": "Near-OOD inputs (adult chest X-rays, other body parts, different scanners) may NOT be reliably detected. OOD rejection is not guaranteed.",
   "proxy_sets_not_used_for_threshold_fitting": true,
   "precedence_experiment": {
-    "order_a_quality_then_ood_correct_rate": 1.0,
-    "order_b_ood_then_quality_correct_rate": 0.69,
+    "order_a_quality_then_ood_correct_rate": 0.98,
+    "order_b_ood_then_quality_correct_rate": 0.57,
     "chosen_ordering": "quality_gate_before_feature_ood",
     "n_samples": 100,
     "note": "Ordering A (Quality then OOD) correctly attributes blur/darkness to image quality rather than misclassifying degraded chest radiographs as non-medical OOD."

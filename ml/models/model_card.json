@@ -1,15 +1,14 @@
 {
-  "model_name": "ResNet-18 (ImageNet-pretrained, fine-tuned)",
-  "dataset": "PneumoniaMNIST+ (224x224)",
-  "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
+  "model_name": "MedGuard AI RESNET18_MLP Chest X-Ray Classifier",
+  "model_version": "resnet18-pneumoniamnist224-v1+d31a57c4",
   "base_model": "torchvision.models.resnet18",
   "task": "Binary Classification (Normal vs Pneumonia)",
   "intended_use": "Educational decision-support research prototype. Not for clinical diagnosis.",
-  "created_utc": "2026-10-08T05:36:16.382967+00:00",
+  "created_utc": "2026-10-08T12:15:59.041990+00:00",
   "architecture": {
     "backbone": "ResNet-18",
     "feature_dim": 512,
-    "classifier": "Linear(512, 2)"
+    "classifier": "Linear(512, 256) -> BatchNorm1d -> ReLU -> Dropout(0.3) -> Linear(256, 64) -> ReLU -> Dropout(0.2) -> Linear(64, 1)"
   },
   "input": {
     "format": "Grayscale chest X-ray replicated to 3 channels",
@@ -32,29 +31,30 @@
   },
   "training": {
     "config": {
-      "epochs": 15,
-      "actual_epochs_trained": 11,
-      "batch_size": 64,
+      "epochs": 1,
+      "actual_epochs_trained": 1,
+      "batch_size": 32,
       "lr": 0.0001,
       "weight_decay": 0.0001,
       "seed": 42,
-      "smoke": false,
+      "smoke": true,
       "device": "cuda",
       "gpu_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
-      "cuda_version": "12.1",
+      "cuda_version": "12.8",
       "optimizer": "AdamW",
       "scheduler": "CosineAnnealingLR",
       "class_weights": [
-        1.93904447555542,
-        0.6737263798713684
+        1.0,
+        0.3474527895450592
       ],
-      "training_time_sec": 190.33
+      "arch": "resnet18_mlp",
+      "training_time_sec": 1.82
     },
-    "best_epoch": 6,
+    "best_epoch": 1,
     "best_val_metric": {
       "name": "val_auroc",
-      "value": 0.999,
-      "val_loss": 0.0521
+      "value": 0.9614,
+      "val_loss": 0.3465
     }
   },
   "dataset": {

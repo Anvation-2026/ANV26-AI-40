@@ -1,34 +1,34 @@
 {
-  "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
-  "updated_utc": "2026-10-08T05:52:48.705796+00:00",
+  "model_version": "resnet18-pneumoniamnist224-v1+d31a57c4",
+  "updated_utc": "2026-10-08T12:15:59.287121+00:00",
   "artifacts": {
     "best_model.prev.pth": {
-      "sha256": "80379b405f4d027d8610eb9a5a0fbf76e540e8ee9790f543e5a9b536eeba9670",
-      "size_bytes": 44791992
+      "sha256": "2c4f0760c092ccd9685dbe77f662d893e8a30ca276f13306224ebb7eda06fc8f",
+      "size_bytes": 45385172
     },
     "best_model.pth": {
-      "sha256": "9bda2caa25047bbebaf699e2342ff8c46fedd1ad1884d6c3fab39dcb928ffdd1",
-      "size_bytes": 44791992
+      "sha256": "d31a57c479461cbc25a6ca88f0c0cc9160ef830bc81bc87bf08b46cc95f6e45b",
+      "size_bytes": 45386900
     },
     "calibration.json": {
-      "sha256": "03a932b85cad5a72c451e7c39352dd0cf99a831ce8af80441b52396ec09576d4",
+      "sha256": "d4c76e7aa947d8ffe4c786f2b4ea486b4789aad1015f218b50708a4472dfe455",
       "size_bytes": 292
     },
     "model_card.json": {
-      "sha256": "9065ceebe56cfdd0f90c22d2d367e13b442e1db3617bc46bf8d462015411a935",
-      "size_bytes": 4032
+      "sha256": "657734de78f438afb3bb9078f0a1f3dfcdf8f312d27c723b268ff2ada26e0e87",
+      "size_bytes": 4150
     },
     "ood_stats.npz": {
-      "sha256": "b9c1f76caa0347b63047c06aaa62a45432008db930c9dbd8a1cde0efbb4e70e9",
-      "size_bytes": 1054256
+      "sha256": "d6c5ad8ec83389232175aef7b29c972ed37f079c8d8adf56777cbbcbdaf58624",
+      "size_bytes": 2102832
     },
     "quality_thresholds.json": {
-      "sha256": "7f43ecd5a74dda23c140be990d3c4d4c968adf009b0ea245e62f734b67a0915c",
-      "size_bytes": 1091
+      "sha256": "0e2d61de5949de89deb00c8ebc4ccd39947320be23ce77f4f24be9fbf98ee138",
+      "size_bytes": 1078
     },
     "thresholds.json": {
-      "sha256": "f50faa5351968e15615caaffce29c728330b2c70a09f1c7921173aad7ae592ed",
-      "size_bytes": 721
+      "sha256": "8041a0c045295ba567a715ca1b7754dc08055172a70e8762b5da84ff3b12540a",
+      "size_bytes": 556
     }
   }
 }

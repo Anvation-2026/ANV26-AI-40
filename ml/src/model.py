@@ -33,17 +33,140 @@ def compute_file_sha256(filepath: Path) -> str:
     return sha256.hexdigest()
 
 
-def build_model(pretrained: bool = True) -> nn.Module:
+class ResNet18MLP(nn.Module):
     """
-    Builds ResNet-18 with 2-class classification head.
-    If pretrained=True, downloads and initializes with ImageNet weights.
-    If pretrained=False (inference mode), initializes without pre-trained weights.
+    ImageNet-pretrained ResNet-18 feature extractor + Multi-Layer Perceptron (MLP) head.
+    Architecture:
+      Backbone: ResNet-18 (conv1 through avgpool -> 512-dim features)
+      Classifier:
+        - Linear(512, 256)
+        - BatchNorm1d(256)
+        - ReLU
+        - Dropout(0.3)
+        - Linear(256, 64)
+        - ReLU
+        - Dropout(0.2)
+        - Linear(64, 1)  -> Single binary classification logit
     """
-    weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
-    model = resnet18(weights=weights)
-    in_features = model.fc.in_features  # 512
-    model.fc = nn.Linear(in_features, len(CLASS_NAMES))
-    return model
+
+    def __init__(self, pretrained: bool = True):
+        super().__init__()
+        weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
+        backbone = resnet18(weights=weights)
+
+        # Retain all feature extraction stages
+        self.conv1 = backbone.conv1
+        self.bn1 = backbone.bn1
+        self.relu = backbone.relu
+        self.maxpool = backbone.maxpool
+        self.layer1 = backbone.layer1
+        self.layer2 = backbone.layer2
+        self.layer3 = backbone.layer3
+        self.layer4 = backbone.layer4
+        self.avgpool = backbone.avgpool
+
+        # MLP classification head
+        self.classifier = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.3),
+            nn.Linear(256, 64),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.2),
+            nn.Linear(64, 1),
+        )
+
+    def extract_features(self, x: torch.Tensor) -> torch.Tensor:
+        """Runs convolutional backbone to produce 512-d feature vector."""
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.avgpool(x)
+        return torch.flatten(x, 1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Returns single binary logit (N, 1)."""
+        feats = self.extract_features(x)
+        return self.classifier(feats)
+
+    def forward_with_features(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Returns binary logit (N, 1) and penultimate features (N, 512)."""
+        feats = self.extract_features(x)
+        logits = self.classifier(feats)
+        return logits, feats
+
+    def get_2d_logits(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Maps binary logit z to 2-class logits [-z/2, z/2] so that
+        softmax([-z/2, z/2]) produces [1 - sigmoid(z), sigmoid(z)].
+        Provides backward compatibility with 2-class downstream tools.
+        """
+        logit = self.forward(x)  # (N, 1)
+        half_z = logit / 2.0
+        return torch.cat([-half_z, half_z], dim=1)  # (N, 2)
+
+
+class ResNet18Linear(nn.Module):
+    """
+    Baseline ResNet-18 with 2-class linear classification head.
+    Matches original baseline architecture.
+    """
+
+    def __init__(self, pretrained: bool = True):
+        super().__init__()
+        weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
+        backbone = resnet18(weights=weights)
+
+        self.conv1 = backbone.conv1
+        self.bn1 = backbone.bn1
+        self.relu = backbone.relu
+        self.maxpool = backbone.maxpool
+        self.layer1 = backbone.layer1
+        self.layer2 = backbone.layer2
+        self.layer3 = backbone.layer3
+        self.layer4 = backbone.layer4
+        self.avgpool = backbone.avgpool
+        self.fc = nn.Linear(512, len(CLASS_NAMES))
+
+    def extract_features(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.avgpool(x)
+        return torch.flatten(x, 1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        feats = self.extract_features(x)
+        return self.fc(feats)
+
+    def forward_with_features(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        feats = self.extract_features(x)
+        logits = self.fc(feats)
+        return logits, feats
+
+    def get_2d_logits(self, x: torch.Tensor) -> torch.Tensor:
+        return self.forward(x)
+
+
+def build_model(pretrained: bool = True, arch: str = "resnet18_mlp") -> nn.Module:
+    """
+    Builds either ResNet-18 + MLP (arch='resnet18_mlp')
+    or baseline ResNet-18 Linear (arch='resnet18_linear' or 'resnet18').
+    """
+    if "mlp" in arch.lower():
+        return ResNet18MLP(pretrained=pretrained)
+    return ResNet18Linear(pretrained=pretrained)
 
 
 def save_checkpoint(
@@ -54,11 +177,10 @@ def save_checkpoint(
     best_val_metric: Dict[str, Any],
     dataset_meta: Dict[str, Any],
     models_dir: Path = MODELS_DIR,
+    arch: str = "resnet18_mlp",
 ) -> Path:
     """
-    Saves best_model.pth with full required metadata.
-    Also preserves previous checkpoint as best_model.prev.pth if it exists.
-    Updates model_card.json and artifacts_manifest.json.
+    Saves checkpoint with complete metadata and backup of previous model.
     """
     path = Path(path)
     models_dir = Path(models_dir)
@@ -74,11 +196,20 @@ def save_checkpoint(
         except Exception as e:
             print(f"[Model] Warning: could not backup previous checkpoint: {e}")
 
-    # Prepare checkpoint payload
+    # Determine architecture metadata
+    is_mlp = isinstance(model, ResNet18MLP) or "mlp" in arch.lower()
+    arch_name = "resnet18_mlp" if is_mlp else "resnet18_linear"
+    classifier_desc = (
+        "Linear(512, 256) -> BatchNorm1d -> ReLU -> Dropout(0.3) -> "
+        "Linear(256, 64) -> ReLU -> Dropout(0.2) -> Linear(64, 1)"
+        if is_mlp
+        else "Linear(512, 2)"
+    )
+
     checkpoint_data = {
         "state_dict": model.state_dict(),
-        "arch": "resnet18",
-        "num_classes": len(CLASS_NAMES),
+        "arch": arch_name,
+        "num_classes": 1 if is_mlp else len(CLASS_NAMES),
         "class_names": CLASS_NAMES,
         "input_size": IMAGE_SIZE,
         "normalization": {"mean": IMAGENET_MEAN, "std": IMAGENET_STD},
@@ -95,9 +226,8 @@ def save_checkpoint(
     ckpt_sha256 = compute_file_sha256(path)
     full_model_version = f"{MODEL_VERSION_BASE}+{ckpt_sha256[:8]}"
 
-    # Save model_card.json
     model_card = {
-        "model_name": "MedGuard AI ResNet-18 Chest X-Ray Classifier",
+        "model_name": f"MedGuard AI {arch_name.upper()} Chest X-Ray Classifier",
         "model_version": full_model_version,
         "base_model": "torchvision.models.resnet18",
         "task": "Binary Classification (Normal vs Pneumonia)",
@@ -106,7 +236,7 @@ def save_checkpoint(
         "architecture": {
             "backbone": "ResNet-18",
             "feature_dim": 512,
-            "classifier": "Linear(512, 2)",
+            "classifier": classifier_desc,
         },
         "input": {
             "format": "Grayscale chest X-ray replicated to 3 channels",
@@ -130,14 +260,12 @@ def save_checkpoint(
     with open(model_card_path, "w", encoding="utf-8") as f:
         json.dump(model_card, f, indent=2)
 
-    # Update artifacts_manifest.json
     update_artifacts_manifest(models_dir, full_model_version)
     print(f"[Model] Checkpoint and model card saved: {path} (version: {full_model_version})")
     return path
 
 
 def update_artifacts_manifest(models_dir: Path = MODELS_DIR, model_version: Optional[str] = None) -> Path:
-    """Scans models_dir, computes SHA-256 for all present files, and saves artifacts_manifest.json."""
     models_dir = Path(models_dir)
     manifest_path = models_dir / "artifacts_manifest.json"
 
@@ -174,32 +302,24 @@ def load_checkpoint(
     path: Path,
     device: str = "cpu",
 ) -> Tuple[nn.Module, Dict[str, Any]]:
-    """
-    Loads model checkpoint safely with weights_only handling.
-    Returns (model, metadata_dict).
-    """
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Checkpoint file does not exist: {path}")
 
-    # Build blank architecture
-    model = build_model(pretrained=False)
-
     try:
-        # PyTorch >= 2.4 default weights_only=True
         checkpoint = torch.load(path, map_location=device, weights_only=True)
     except Exception:
-        # Fallback for earlier torch or complex dicts
         checkpoint = torch.load(path, map_location=device, weights_only=False)
 
     if not isinstance(checkpoint, dict) or "state_dict" not in checkpoint:
         raise ValueError(f"Invalid checkpoint format in {path}")
 
+    arch = checkpoint.get("arch", "resnet18")
+    model = build_model(pretrained=False, arch=arch)
     model.load_state_dict(checkpoint["state_dict"])
     model.to(device)
     model.eval()
 
-    # Calculate model_version string if sha is present
     ckpt_sha256 = compute_file_sha256(path)
     base_ver = checkpoint.get("model_version", MODEL_VERSION_BASE)
     checkpoint["full_model_version"] = f"{base_ver}+{ckpt_sha256[:8]}"

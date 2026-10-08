@@ -1,12 +1,12 @@
 {
-  "temperature": 1.577336,
+  "temperature": 2.171812,
   "method": "bounded_scalar_minimization_on_log_T",
   "fitted_on": "val",
-  "val_nll_before": 0.0612,
-  "val_nll_after": 0.053,
-  "val_ece_before": 0.0134,
-  "val_ece_after": 0.0118,
+  "val_nll_before": 0.0716,
+  "val_nll_after": 0.0504,
+  "val_ece_before": 0.0172,
+  "val_ece_after": 0.0081,
   "n": 524,
-  "test_ece_before": 0.0349,
-  "test_ece_after": 0.0278
+  "test_ece_before": 0.0756,
+  "test_ece_after": 0.057
 }

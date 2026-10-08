@@ -1,0 +1,103 @@
+{
+  "timestamp_utc": "2026-10-08T10:47:54.162623+00:00",
+  "selected_model": "ResNet18 + MLP",
+  "selection_criteria": "Highest validation AUROC and clinical sensitivity",
+  "model_a_linear": {
+    "validation": {
+      "accuracy": 0.9714,
+      "sensitivity": 0.9692,
+      "recall": 0.9692,
+      "specificity": 0.9778,
+      "precision": 0.9921,
+      "f1": 0.9805,
+      "auroc": 0.9961,
+      "false_negative_rate": 0.0308,
+      "brier_score": 0.0223,
+      "ece": 0.0216,
+      "confusion_matrix": [
+        [
+          132,
+          3
+        ],
+        [
+          12,
+          377
+        ]
+      ],
+      "epoch": 33,
+      "train_loss": 0.0401,
+      "val_loss": 0.0428
+    },
+    "test": {
+      "accuracy": 0.9071,
+      "sensitivity": 0.9897,
+      "recall": 0.9897,
+      "specificity": 0.7692,
+      "precision": 0.8773,
+      "f1": 0.9301,
+      "auroc": 0.9813,
+      "false_negative_rate": 0.0103,
+      "brier_score": 0.0629,
+      "ece": 0.0355,
+      "confusion_matrix": [
+        [
+          180,
+          54
+        ],
+        [
+          4,
+          386
+        ]
+      ]
+    }
+  },
+  "model_b_mlp": {
+    "validation": {
+      "accuracy": 0.9752,
+      "sensitivity": 0.9846,
+      "recall": 0.9846,
+      "specificity": 0.9481,
+      "precision": 0.9821,
+      "f1": 0.9833,
+      "auroc": 0.9982,
+      "false_negative_rate": 0.0154,
+      "brier_score": 0.0173,
+      "ece": 0.0172,
+      "confusion_matrix": [
+        [
+          128,
+          7
+        ],
+        [
+          6,
+          383
+        ]
+      ],
+      "epoch": 31,
+      "train_loss": 0.0009,
+      "val_loss": 0.0501
+    },
+    "test": {
+      "accuracy": 0.9087,
+      "sensitivity": 0.9974,
+      "recall": 0.9974,
+      "specificity": 0.7607,
+      "precision": 0.8742,
+      "f1": 0.9317,
+      "auroc": 0.9795,
+      "false_negative_rate": 0.0026,
+      "brier_score": 0.082,
+      "ece": 0.0756,
+      "confusion_matrix": [
+        [
+          178,
+          56
+        ],
+        [
+          1,
+          389
+        ]
+      ]
+    }
+  }
+}

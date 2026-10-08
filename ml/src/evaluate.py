@@ -48,7 +48,12 @@ def collect_predictions(
         for inputs, targets in loader:
             inputs = inputs.to(device)
             targets = targets.to(device)
-            logits = model(inputs)
+            if hasattr(model, "get_2d_logits"):
+                logits = model.get_2d_logits(inputs)
+            else:
+                logits = model(inputs)
+                if logits.shape[1] == 1:
+                    logits = torch.cat([-logits / 2.0, logits / 2.0], dim=1)
             all_logits.append(logits.detach().cpu())
             all_targets.append(targets.detach().cpu())
 

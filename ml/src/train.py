@@ -37,7 +37,7 @@ from config import (
     SEED,
 )
 from src.dataset import dataset_summary, get_dataloaders, get_split
-from src.model import build_model, save_checkpoint
+from src.model import ResNet18MLP, ResNet18Linear, build_model, save_checkpoint
 from src.preprocessing import get_eval_transform, get_train_transform
 
 
@@ -86,7 +86,10 @@ def evaluate_loader(
             inputs = inputs.to(device)
             targets = targets.to(device)
             logits = model(inputs)
-            loss = criterion(logits, targets)
+            if logits.shape[1] == 1:
+                loss = criterion(logits, targets.float().view(-1, 1))
+            else:
+                loss = criterion(logits, targets.squeeze().long())
             total_loss += loss.item() * len(targets)
             all_logits.append(logits.detach().cpu())
             all_targets.append(targets.detach().cpu())
@@ -95,9 +98,13 @@ def evaluate_loader(
     avg_loss = total_loss / max(1, total_samples)
 
     logits_cat = torch.cat(all_logits, dim=0)
-    targets_cat = torch.cat(all_targets, dim=0).numpy()
-    probs = torch.softmax(logits_cat, dim=1)[:, 1].numpy()
-    preds = torch.argmax(logits_cat, dim=1).numpy()
+    targets_cat = torch.cat(all_targets, dim=0).squeeze().numpy()
+    if logits_cat.shape[1] == 1:
+        probs = torch.sigmoid(logits_cat).squeeze(-1).numpy()
+        preds = (probs >= 0.5).astype(int)
+    else:
+        probs = torch.softmax(logits_cat, dim=1)[:, 1].numpy()
+        preds = torch.argmax(logits_cat, dim=1).numpy()
 
     accuracy = float(np.mean(preds == targets_cat))
 
@@ -177,6 +184,7 @@ def train_model(
     seed: int = SEED,
     smoke: bool = False,
     patience: int = DEFAULT_PATIENCE,
+    arch: str = "resnet18_mlp",
 ) -> Dict:
     """Main training execution function."""
     set_seed(seed)
@@ -205,9 +213,6 @@ def train_model(
     train_imgs, train_lbls = get_split("train", DATASET_PATH)
     val_imgs, val_lbls = get_split("val", DATASET_PATH)
 
-    class_weights = compute_class_weights(train_lbls, device)
-    criterion = nn.CrossEntropyLoss(weight=class_weights)
-
     dataloaders = get_dataloaders(
         batch_size=batch_size,
         augment=True,
@@ -225,9 +230,22 @@ def train_model(
         val_loader = DataLoader(val_sub, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS)
 
     # Build model (Pretrained ResNet-18)
-    print(f"[Train] Building ResNet-18 (ImageNet pretrained weights)...")
-    model = build_model(pretrained=True)
+    print(f"[Train] Building model ({arch}, ImageNet pretrained weights)...")
+    model = build_model(pretrained=True, arch=arch)
     model.to(device)
+
+    is_binary_single_logit = isinstance(model, ResNet18MLP)
+    if is_binary_single_logit:
+        count_0 = int(np.sum(train_lbls.squeeze() == 0))
+        count_1 = int(np.sum(train_lbls.squeeze() == 1))
+        pos_weight = torch.tensor([count_0 / max(1, count_1)], dtype=torch.float32, device=device)
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        print(f"[Train] Loss: BCEWithLogitsLoss (pos_weight={pos_weight.item():.4f}, Normal: {count_0}, Pneumonia: {count_1})")
+        class_weights_saved = [1.0, float(pos_weight.item())]
+    else:
+        class_weights = compute_class_weights(train_lbls, device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        class_weights_saved = [float(w) for w in class_weights.cpu().numpy()]
 
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
@@ -260,7 +278,10 @@ def train_model(
 
             with torch.amp.autocast("cuda", enabled=use_amp):
                 outputs = model(inputs)
-                loss = criterion(outputs, targets)
+                if is_binary_single_logit:
+                    loss = criterion(outputs, targets.float().view(-1, 1))
+                else:
+                    loss = criterion(outputs, targets.squeeze().long())
 
             if use_amp:
                 scaler.scale(loss).backward()
@@ -360,7 +381,8 @@ def train_model(
         "cuda_version": cuda_ver,
         "optimizer": "AdamW",
         "scheduler": "CosineAnnealingLR",
-        "class_weights": [float(w) for w in class_weights.cpu().numpy()],
+        "class_weights": class_weights_saved,
+        "arch": arch,
         "training_time_sec": round(total_training_sec, 2),
     }
 
@@ -370,7 +392,7 @@ def train_model(
         "val_loss": round(float(best_val_loss), 4),
     }
 
-    checkpoint_path = MODELS_DIR / "best_model.pth"
+    checkpoint_path = MODELS_DIR / ("smoke_model.pth" if smoke else "best_model.pth")
     save_checkpoint(
         path=checkpoint_path,
         model=model,
@@ -379,6 +401,7 @@ def train_model(
         best_val_metric=best_val_metric,
         dataset_meta=ds_meta,
         models_dir=MODELS_DIR,
+        arch=arch,
     )
 
     return {
@@ -400,6 +423,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=SEED, help="Random seed")
     parser.add_argument("--patience", type=int, default=DEFAULT_PATIENCE, help="Early stopping patience")
     parser.add_argument("--smoke", action="store_true", help="Run quick 3-epoch smoke test on small subset")
+    parser.add_argument("--arch", type=str, default="resnet18_mlp", choices=["resnet18_mlp", "resnet18_linear"], help="Architecture")
     args = parser.parse_args()
 
     try:
@@ -411,6 +435,7 @@ if __name__ == "__main__":
             seed=args.seed,
             smoke=args.smoke,
             patience=args.patience,
+            arch=args.arch,
         )
     except torch.cuda.OutOfMemoryError as oom_err:
         print(f"[Train] CUDA OOM encountered with batch_size={args.batch_size}. Retrying automatically with {FALLBACK_BATCH_SIZE}...")
@@ -423,4 +448,5 @@ if __name__ == "__main__":
             seed=args.seed,
             smoke=args.smoke,
             patience=args.patience,
+            arch=args.arch,
         )

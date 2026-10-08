@@ -133,26 +133,45 @@ def to_gray_uint8(
     raise InvalidImageError("Could not convert input to grayscale array.")
 
 
-def resize_224(gray: np.ndarray) -> np.ndarray:
+def resize_224(gray: np.ndarray, preserve_aspect: bool = True) -> np.ndarray:
     """
     If not 224x224, resizes using cv2.INTER_AREA for downscale
     and cv2.INTER_CUBIC for upscale. 224x224 inputs pass through untouched.
+    For non-square clinical chest radiographs, preserve_aspect=True symmetrically
+    pads the shorter axis to prevent anatomical squashing.
     """
     if gray.shape == (IMAGE_SIZE, IMAGE_SIZE):
         return gray
 
     h, w = gray.shape[:2]
-    # Downscaling if both dims are >= 224 and at least one is > 224
-    if h >= IMAGE_SIZE and w >= IMAGE_SIZE:
-        interpolation = cv2.INTER_AREA
-    elif h <= IMAGE_SIZE and w <= IMAGE_SIZE:
-        interpolation = cv2.INTER_CUBIC
-    else:
-        # One dimension up, one down
-        interpolation = cv2.INTER_LINEAR
+    if not preserve_aspect or h == w:
+        if h >= IMAGE_SIZE and w >= IMAGE_SIZE:
+            interpolation = cv2.INTER_AREA
+        elif h <= IMAGE_SIZE and w <= IMAGE_SIZE:
+            interpolation = cv2.INTER_CUBIC
+        else:
+            interpolation = cv2.INTER_LINEAR
+        return cv2.resize(gray, (IMAGE_SIZE, IMAGE_SIZE), interpolation=interpolation)
 
-    resized = cv2.resize(gray, (IMAGE_SIZE, IMAGE_SIZE), interpolation=interpolation)
-    return resized
+    # Scale proportionally so longer side fits IMAGE_SIZE
+    scale = float(IMAGE_SIZE) / max(h, w)
+    new_w = max(1, int(round(w * scale)))
+    new_h = max(1, int(round(h * scale)))
+
+    interpolation = cv2.INTER_AREA if scale < 1.0 else cv2.INTER_CUBIC
+    scaled = cv2.resize(gray, (new_w, new_h), interpolation=interpolation)
+
+    # Symmetrical padding with black margin (standard medical collimation border)
+    pad_top = (IMAGE_SIZE - new_h) // 2
+    pad_bottom = IMAGE_SIZE - new_h - pad_top
+    pad_left = (IMAGE_SIZE - new_w) // 2
+    pad_right = IMAGE_SIZE - new_w - pad_left
+
+    padded = cv2.copyMakeBorder(
+        scaled, pad_top, pad_bottom, pad_left, pad_right,
+        borderType=cv2.BORDER_CONSTANT, value=0
+    )
+    return padded
 
 
 def to_tensor(

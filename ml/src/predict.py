@@ -468,7 +468,7 @@ class MedGuardPredictor:
             "status": status,
             "finding": finding,
             "probability": probability,
-            "uncertainty": uncertainty_level if status != "unsupported_file" else None,
+            "uncertainty": uncertainty_level if status in ["success", "uncertain"] else None,
             "quality": quality_res["status"],
             "ood": bool(ood_res["flagged"]),
             "explanation": explanation,
@@ -484,6 +484,14 @@ class MedGuardPredictor:
         Runs model forward pass, extracting penultimate avg-pool features (512-d)
         and final classification logits (2-d).
         """
+        if hasattr(self.model, "forward_with_features"):
+            raw_logits, features_flat = self.model.forward_with_features(tensor)
+            if raw_logits.shape[1] == 1:
+                logits = torch.cat([-raw_logits / 2.0, raw_logits / 2.0], dim=1)
+            else:
+                logits = raw_logits
+            return logits, features_flat
+
         x = self.model.conv1(tensor)
         x = self.model.bn1(x)
         x = self.model.relu(x)
@@ -496,7 +504,14 @@ class MedGuardPredictor:
 
         features = self.model.avgpool(x)
         features_flat = torch.flatten(features, 1)
-        logits = self.model.fc(features_flat)
+        if hasattr(self.model, "classifier"):
+            raw_logits = self.model.classifier(features_flat)
+            if raw_logits.shape[1] == 1:
+                logits = torch.cat([-raw_logits / 2.0, raw_logits / 2.0], dim=1)
+            else:
+                logits = raw_logits
+        else:
+            logits = self.model.fc(features_flat)
         return logits, features_flat
 
     @staticmethod

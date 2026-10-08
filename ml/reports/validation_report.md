@@ -1,9 +1,9 @@
 # MedGuard AI — Model Validation Report
 
 **Schema Version:** `1.0`  
-**Model Version:** `resnet18-pneumoniamnist224-v1+9bda2caa`  
-**Generated At:** `2026-10-08T06:05:34.372489+00:00`  
-**Hardware Device:** `cuda`  
+**Model Version:** `resnet18-pneumoniamnist224-v1+2c4f0760`  
+**Generated At:** `2026-10-08T12:00:44.740392+00:00`  
+**Hardware Device:** `cpu`  
 **Dataset:** PneumoniaMNIST+ (224x224) (224x224)
 
 ---
@@ -14,19 +14,19 @@ Primary evaluation on official **Test split** (N = 624):
 
 | Metric | Test Value (Calibrated) | 95% Bootstrap CI | Validation Value |
 |---|---|---|---|
-| **AUROC** | **0.9929** | [0.9880, 0.9968] | 0.9990 |
-| **Accuracy** | **0.9551** | [0.9375, 0.9712] | 0.9790 |
-| **Sensitivity (Recall)** | **0.9897** | [0.9791, 1.0000] | 0.9769 |
-| **Specificity** | **0.8974** | [0.8583, 0.9342] | 0.9852 |
-| **Precision** | **0.9415** | - | 0.9948 |
-| **F1 Score** | **0.9650** | - | 0.9857 |
-| **False-Negative Rate** | **0.0103** | - | 0.0231 |
+| **AUROC** | **0.9816** | [0.9711, 0.9910] | 0.9982 |
+| **Accuracy** | **0.9087** | [0.8814, 0.9311] | 0.9752 |
+| **Sensitivity (Recall)** | **0.9974** | [0.9918, 1.0000] | 0.9846 |
+| **Specificity** | **0.7607** | [0.7000, 0.8136] | 0.9481 |
+| **Precision** | **0.8742** | - | 0.9821 |
+| **F1 Score** | **0.9317** | - | 0.9833 |
+| **False-Negative Rate** | **0.0026** | - | 0.0154 |
 
 ### Confusion Matrix (Test Split)
 ```
                 Predicted Normal    Predicted Pneumonia
-Actual Normal        210                 24
-Actual Pneumonia     4                   386
+Actual Normal        178                 56
+Actual Pneumonia     1                   389
 ```
 
 ---
@@ -34,21 +34,21 @@ Actual Pneumonia     4                   386
 ## 2. Calibration & Temperature Scaling
 
 Fitted on **Validation Split** (N = 524):
-- **Learned Temperature $T$:** `1.5773`
-- **Validation ECE:** `0.0134` $\to$ `0.0118`
-- **Test ECE:** `0.0349` $\to$ `0.0278`
-- **Test Brier Score:** `0.0351` | **Test NLL:** `0.1325`
+- **Learned Temperature $T$:** `2.1718`
+- **Validation ECE:** `0.0172` $\to$ `0.0081`
+- **Test ECE:** `0.0756` $\to$ `0.0570`
+- **Test Brier Score:** `0.0744` | **Test NLL:** `0.3303`
 
 ---
 
 ## 3. Selective Prediction & Uncertainty Abstention
 
-Threshold $\tau_{\text{accept}}$ fitted on validation set: **0.5618**
+Threshold $\tau_{\text{accept}}$ fitted on validation set: **0.5063**
 
-- **Coverage on Test Set:** **98.6%**
-- **Abstained (Uncertain):** **9** samples
-- **Accuracy on Accepted Samples:** **0.9577**
-- **False Negatives Caught by Abstention:** 0 out of 4 total FNs
+- **Coverage on Test Set:** **100.0%**
+- **Abstained (Uncertain):** **0** samples
+- **Accuracy on Accepted Samples:** **0.9087**
+- **False Negatives Caught by Abstention:** 0 out of 1 total FNs
 
 ---
 
