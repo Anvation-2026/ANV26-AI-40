@@ -7,7 +7,10 @@ import cv2
 import numpy as np
 
 # Path bootstrap
-from src import _ML_ROOT  # noqa: F401
+try:
+    from src import _ML_ROOT  # noqa: F401  # python -m src.x from ml/
+except ModuleNotFoundError:
+    import _pathfix  # noqa: F401  # python x.py from ml/src/
 
 from config import (
     DATASET_PATH,
@@ -55,6 +58,14 @@ def compute_metrics(gray: np.ndarray) -> Dict[str, float]:
     }
 
 
+QUALITY_LABELS = {
+    "blur_laplacian_var": "Sharpness (Laplacian variance)",
+    "brightness_mean": "Brightness",
+    "contrast_p99_p1": "Contrast (p99-p1)",
+    "noise_sigma": "Noise estimate",
+}
+
+
 class QualityGate:
     """
     Assesses image quality against data-fitted thresholds.
@@ -69,40 +80,99 @@ class QualityGate:
             data = json.load(f)
         self.thresholds = data["thresholds"]
 
+    def get_formatted_thresholds(self) -> Dict[str, Dict[str, Optional[float]]]:
+        """Returns structured min/max bounds matching response contract."""
+        return {
+            "blur_laplacian_var": {
+                "min": self.thresholds.get("blur_min"),
+                "max": None,
+            },
+            "brightness_mean": {
+                "min": self.thresholds.get("brightness_min"),
+                "max": self.thresholds.get("brightness_max"),
+            },
+            "contrast_p99_p1": {
+                "min": self.thresholds.get("contrast_min"),
+                "max": None,
+            },
+            "noise_sigma": {
+                "min": None,
+                "max": self.thresholds.get("noise_max"),
+            },
+        }
+
     def assess(self, gray224: np.ndarray) -> Dict:
         """
         Computes quality metrics and checks against fitted thresholds.
-        Returns: {status: "acceptable"|"poor", metrics: {...}, reasons: [...]}
+        Returns: {status: "acceptable"|"poor", metrics: {...}, thresholds: {...}, passed: {...}, labels: {...}, reasons: [...]}
         """
-        # Minimum raw-size check: here, gray224 is already 224x224
-        # (raw-size check happens in predict.py before preprocessing)
-        if gray224 is None or gray224.size == 0:
-            return {"status": "poor", "metrics": {}, "reasons": ["corrupt"]}
+        formatted_thresholds = self.get_formatted_thresholds()
 
-        if gray224.std() < 0.5:
-            return {"status": "poor", "metrics": {}, "reasons": ["corrupt"]}
+        if gray224 is None or gray224.size == 0:
+            return {
+                "status": "poor",
+                "metrics": {},
+                "thresholds": formatted_thresholds,
+                "passed": {
+                    "blur_laplacian_var": False,
+                    "brightness_mean": False,
+                    "contrast_p99_p1": False,
+                    "noise_sigma": False,
+                },
+                "labels": QUALITY_LABELS,
+                "reasons": ["corrupt"],
+            }
 
         metrics = compute_metrics(gray224)
         reasons = []
+
+        if gray224.std() < 0.5:
+            reasons.append("corrupt")
 
         blur = metrics["blur_laplacian_var"]
         bright = metrics["brightness_mean"]
         contrast = metrics["contrast_p99_p1"]
         noise = metrics["noise_sigma"]
 
-        if blur < self.thresholds.get("blur_min", 10.0):
+        blur_min = self.thresholds.get("blur_min", 10.0)
+        bright_min = self.thresholds.get("brightness_min", 0.05)
+        bright_max = self.thresholds.get("brightness_max", 0.95)
+        contrast_min = self.thresholds.get("contrast_min", 0.05)
+        noise_max = self.thresholds.get("noise_max", 50.0)
+
+        passed_blur = bool(blur >= blur_min)
+        passed_bright = bool(bright_min <= bright <= bright_max)
+        passed_contrast = bool(contrast >= contrast_min)
+        passed_noise = bool(noise <= noise_max)
+
+        if not passed_blur:
             reasons.append("blur")
-        if bright < self.thresholds.get("brightness_min", 0.05):
+        if bright < bright_min:
             reasons.append("too_dark")
-        if bright > self.thresholds.get("brightness_max", 0.95):
+        if bright > bright_max:
             reasons.append("too_bright")
-        if contrast < self.thresholds.get("contrast_min", 0.05):
+        if not passed_contrast:
             reasons.append("low_contrast")
-        if noise > self.thresholds.get("noise_max", 50.0):
+        if not passed_noise:
             reasons.append("noisy")
 
         status = "poor" if reasons else "acceptable"
-        return {"status": status, "metrics": metrics, "reasons": reasons}
+
+        passed = {
+            "blur_laplacian_var": passed_blur,
+            "brightness_mean": passed_bright,
+            "contrast_p99_p1": passed_contrast,
+            "noise_sigma": passed_noise,
+        }
+
+        return {
+            "status": status,
+            "metrics": metrics,
+            "thresholds": formatted_thresholds,
+            "passed": passed,
+            "labels": QUALITY_LABELS,
+            "reasons": reasons,
+        }
 
 
 def fit_quality_thresholds(
@@ -282,7 +352,15 @@ def assess_quality(gray224: np.ndarray) -> Dict:
     thresholds_path = MODELS_DIR / "quality_thresholds.json"
     if not thresholds_path.exists():
         metrics = compute_metrics(gray224)
-        return {"status": "acceptable", "metrics": metrics, "reasons": [], "note": "No fitted thresholds; using raw metrics only"}
+        return {
+            "status": "acceptable",
+            "metrics": metrics,
+            "thresholds": None,
+            "passed": None,
+            "labels": QUALITY_LABELS,
+            "reasons": [],
+            "note": "No fitted thresholds; using raw metrics only",
+        }
     gate = QualityGate(thresholds_path)
     return gate.assess(gray224)
 

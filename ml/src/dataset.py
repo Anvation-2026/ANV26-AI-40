@@ -7,7 +7,10 @@ from typing import Dict, Optional, Tuple
 import urllib.request
 
 # Path bootstrap
-from src import _ML_ROOT  # noqa: F401 - side effect: adds ml/ to sys.path
+try:
+    from src import _ML_ROOT  # noqa: F401  # python -m src.x from ml/
+except ModuleNotFoundError:
+    import _pathfix  # noqa: F401  # python x.py from ml/src/
 
 import numpy as np
 import torch

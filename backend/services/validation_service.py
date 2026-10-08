@@ -25,7 +25,7 @@ def _normalize_report_dict(raw: Dict[str, Any]) -> Dict[str, Any]:
         if not normalized.get("model_name"):
             normalized["model_name"] = "ResNet-18 (PneumoniaMNIST+)"
         if not normalized.get("generated_at"):
-            normalized["generated_at"] = prov.get("evaluated_utc")
+            normalized["generated_at"] = prov.get("generated_at") or prov.get("evaluated_utc")
         if not normalized.get("split_counts") and prov.get("split_sizes"):
             normalized["split_counts"] = prov.get("split_sizes")
 
@@ -37,10 +37,14 @@ def _normalize_report_dict(raw: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(active, dict):
             # If confusion matrix is inside active metrics, lift it
             if not normalized.get("confusion_matrix") and "confusion_matrix" in active:
-                normalized["confusion_matrix"] = {
-                    "labels": ["normal", "pneumonia"],
-                    "matrix": active["confusion_matrix"],
-                }
+                cm = active["confusion_matrix"]
+                if isinstance(cm, dict):
+                    normalized["confusion_matrix"] = cm
+                else:
+                    normalized["confusion_matrix"] = {
+                        "labels": ["normal", "pneumonia"],
+                        "matrix": cm,
+                    }
             normalized["metrics"] = {
                 "accuracy": active.get("accuracy"),
                 "sensitivity": active.get("sensitivity"),

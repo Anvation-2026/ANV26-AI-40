@@ -14,6 +14,7 @@ def test_health_endpoint(client: TestClient):
 
 def test_model_status_real_mode_stub(client: TestClient, monkeypatch):
     monkeypatch.setattr(settings, "MEDGUARD_MODE", "real")
+    monkeypatch.setattr(settings, "ML_MODULE_PATH", "non_existent_stub")
     response = client.get("/api/model/status")
     assert response.status_code == 200
     data = response.json()
@@ -22,6 +23,16 @@ def test_model_status_real_mode_stub(client: TestClient, monkeypatch):
     assert data["available"] is False
     assert data["inference_ready"] is False
     assert "ML module" in (data.get("message") or "")
+
+
+def test_model_status_real_mode_connected(client: TestClient, monkeypatch):
+    monkeypatch.setattr(settings, "MEDGUARD_MODE", "real")
+    response = client.get("/api/model/status")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "real"
+    assert data["available"] is True
+    assert data["inference_ready"] is True
 
 
 def test_model_status_demo_mode(client: TestClient, monkeypatch):

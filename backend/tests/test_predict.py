@@ -8,6 +8,7 @@ from backend.services.ml_service import MLServiceError, MLTimeoutError
 
 def test_predict_real_mode_with_stub_model_unavailable(client: TestClient, valid_png_bytes, monkeypatch):
     monkeypatch.setattr(settings, "MEDGUARD_MODE", "real")
+    monkeypatch.setattr(ml_service, "get_status", lambda: {"available": False, "inference_ready": False, "message": "ML module not loaded"})
     files = {"file": ("xray.png", valid_png_bytes, "image/png")}
     response = client.post("/api/predict", files=files)
     assert response.status_code == 503

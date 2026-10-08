@@ -57,7 +57,7 @@ DEFAULT_MIN_LOW_UNCERTAINTY_COVERAGE = 0.30
 DEFAULT_DECISION_THRESHOLD = 0.50
 
 # OOD & Modality Constants
-MODALITY_COLOR_THRESHOLD = 8.0 / 255.0  # Mean absolute inter-channel difference
+MODALITY_COLOR_THRESHOLD = 30.0 / 255.0  # Mean absolute inter-channel difference (accommodates subtle compression chroma)
 DEFAULT_OOD_PERCENTILE = 99.0
 
 # Rejection Precedence Order

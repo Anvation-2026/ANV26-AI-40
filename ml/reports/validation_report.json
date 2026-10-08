@@ -1,8 +1,9 @@
 {
+  "schema_version": "1.0",
   "provenance": {
     "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
     "checkpoint_sha256": "9bda2caa25047bbebaf699e2342ff8c46fedd1ad1884d6c3fab39dcb928ffdd1",
-    "evaluated_utc": "2026-10-08T05:47:27.827171+00:00",
+    "generated_at": "2026-10-08T06:05:34.372489+00:00",
     "seed": 42,
     "device": "cuda",
     "split_sizes": {
@@ -13,21 +14,26 @@
   },
   "dataset": {
     "name": "PneumoniaMNIST+ (224x224)",
+    "image_size": 224,
+    "class_names": [
+      "normal",
+      "pneumonia"
+    ],
     "class_counts": {
       "train": {
-        "normal (0)": 1214,
-        "pneumonia (1)": 3494
+        "normal": 1214,
+        "pneumonia": 3494
       },
       "val": {
-        "normal (0)": 135,
-        "pneumonia (1)": 389
+        "normal": 135,
+        "pneumonia": 389
       },
       "test": {
-        "normal (0)": 234,
-        "pneumonia (1)": 390
+        "normal": 234,
+        "pneumonia": 390
       }
     },
-    "exact_duplicates": {
+    "duplicate_overlap": {
       "within_split": {
         "train": 18,
         "val": 0,
@@ -36,233 +42,244 @@
       "train_val_overlap": 8,
       "train_test_overlap": 0,
       "val_test_overlap": 0
-    },
-    "image_size": [
-      224,
-      224
-    ]
+    }
   },
   "metrics": {
     "test": {
       "uncalibrated": {
-        "confusion_matrix": [
-          [
-            210,
-            24
-          ],
-          [
-            4,
-            386
-          ]
-        ],
-        "confusion_labels": [
-          [
-            "TN",
-            "FP"
-          ],
-          [
-            "FN",
-            "TP"
-          ]
-        ],
+        "n": 624,
         "accuracy": 0.9551,
         "precision": 0.9415,
-        "sensitivity": 0.9897,
         "recall": 0.9897,
+        "sensitivity": 0.9897,
         "specificity": 0.8974,
         "f1": 0.965,
         "auroc": 0.9929,
         "false_negative_rate": 0.0103,
         "false_positive_rate": 0.1026,
-        "counts": {
-          "tp": 386,
-          "fp": 24,
-          "tn": 210,
-          "fn": 4,
-          "total": 624
-        },
         "ece": 0.0349,
-        "brier_score": 0.0377,
-        "nll": 0.1784
+        "brier": 0.0377,
+        "nll": 0.1784,
+        "confusion_matrix": {
+          "labels": [
+            "normal",
+            "pneumonia"
+          ],
+          "matrix": [
+            [
+              210,
+              24
+            ],
+            [
+              4,
+              386
+            ]
+          ]
+        },
+        "ci": {
+          "accuracy": [
+            0.9375,
+            0.9712
+          ],
+          "sensitivity": [
+            0.9791,
+            1.0
+          ],
+          "specificity": [
+            0.8583,
+            0.9342
+          ],
+          "auroc": [
+            0.988,
+            0.9968
+          ]
+        }
       },
       "calibrated": {
-        "confusion_matrix": [
-          [
-            210,
-            24
-          ],
-          [
-            4,
-            386
-          ]
-        ],
-        "confusion_labels": [
-          [
-            "TN",
-            "FP"
-          ],
-          [
-            "FN",
-            "TP"
-          ]
-        ],
+        "n": 624,
         "accuracy": 0.9551,
         "precision": 0.9415,
-        "sensitivity": 0.9897,
         "recall": 0.9897,
+        "sensitivity": 0.9897,
         "specificity": 0.8974,
         "f1": 0.965,
         "auroc": 0.9929,
         "false_negative_rate": 0.0103,
         "false_positive_rate": 0.1026,
-        "counts": {
-          "tp": 386,
-          "fp": 24,
-          "tn": 210,
-          "fn": 4,
-          "total": 624
-        },
         "ece": 0.0278,
-        "brier_score": 0.0351,
+        "brier": 0.0351,
         "nll": 0.1325,
-        "bootstrap_95ci": {
-          "accuracy": {
-            "ci_lower": 0.9375,
-            "ci_upper": 0.9712
-          },
-          "sensitivity": {
-            "ci_lower": 0.9791,
-            "ci_upper": 1.0
-          },
-          "specificity": {
-            "ci_lower": 0.8583,
-            "ci_upper": 0.9342
-          },
-          "auroc": {
-            "ci_lower": 0.988,
-            "ci_upper": 0.9968
-          }
+        "confusion_matrix": {
+          "labels": [
+            "normal",
+            "pneumonia"
+          ],
+          "matrix": [
+            [
+              210,
+              24
+            ],
+            [
+              4,
+              386
+            ]
+          ]
+        },
+        "ci": {
+          "accuracy": [
+            0.9375,
+            0.9712
+          ],
+          "sensitivity": [
+            0.9791,
+            1.0
+          ],
+          "specificity": [
+            0.8583,
+            0.9342
+          ],
+          "auroc": [
+            0.988,
+            0.9968
+          ]
         }
       }
     },
     "val": {
       "uncalibrated": {
-        "confusion_matrix": [
-          [
-            133,
-            2
-          ],
-          [
-            9,
-            380
-          ]
-        ],
-        "confusion_labels": [
-          [
-            "TN",
-            "FP"
-          ],
-          [
-            "FN",
-            "TP"
-          ]
-        ],
+        "n": 524,
         "accuracy": 0.979,
         "precision": 0.9948,
-        "sensitivity": 0.9769,
         "recall": 0.9769,
+        "sensitivity": 0.9769,
         "specificity": 0.9852,
         "f1": 0.9857,
         "auroc": 0.999,
         "false_negative_rate": 0.0231,
         "false_positive_rate": 0.0148,
-        "counts": {
-          "tp": 380,
-          "fp": 2,
-          "tn": 133,
-          "fn": 9,
-          "total": 524
-        },
         "ece": 0.0134,
-        "brier_score": 0.0154,
-        "nll": 0.0612
+        "brier": 0.0154,
+        "nll": 0.0612,
+        "confusion_matrix": {
+          "labels": [
+            "normal",
+            "pneumonia"
+          ],
+          "matrix": [
+            [
+              133,
+              2
+            ],
+            [
+              9,
+              380
+            ]
+          ]
+        },
+        "ci": {
+          "accuracy": [
+            0.9656,
+            0.9905
+          ],
+          "sensitivity": [
+            0.9613,
+            0.9899
+          ],
+          "specificity": [
+            0.9624,
+            1.0
+          ],
+          "auroc": [
+            0.9977,
+            0.9998
+          ]
+        }
       },
       "calibrated": {
-        "confusion_matrix": [
-          [
-            133,
-            2
-          ],
-          [
-            9,
-            380
-          ]
-        ],
-        "confusion_labels": [
-          [
-            "TN",
-            "FP"
-          ],
-          [
-            "FN",
-            "TP"
-          ]
-        ],
+        "n": 524,
         "accuracy": 0.979,
         "precision": 0.9948,
-        "sensitivity": 0.9769,
         "recall": 0.9769,
+        "sensitivity": 0.9769,
         "specificity": 0.9852,
         "f1": 0.9857,
         "auroc": 0.999,
         "false_negative_rate": 0.0231,
         "false_positive_rate": 0.0148,
-        "counts": {
-          "tp": 380,
-          "fp": 2,
-          "tn": 133,
-          "fn": 9,
-          "total": 524
-        },
         "ece": 0.0118,
-        "brier_score": 0.0151,
-        "nll": 0.053
+        "brier": 0.0151,
+        "nll": 0.053,
+        "confusion_matrix": {
+          "labels": [
+            "normal",
+            "pneumonia"
+          ],
+          "matrix": [
+            [
+              133,
+              2
+            ],
+            [
+              9,
+              380
+            ]
+          ]
+        },
+        "ci": {
+          "accuracy": [
+            0.9656,
+            0.9905
+          ],
+          "sensitivity": [
+            0.9613,
+            0.9899
+          ],
+          "specificity": [
+            0.9624,
+            1.0
+          ],
+          "auroc": [
+            0.9977,
+            0.9998
+          ]
+        }
       }
     }
   },
   "calibration": {
+    "method": "temperature_scaling",
     "temperature": 1.5773,
-    "method": "Temperature Scaling (Validation NLL Minimization)",
-    "val_ece_before": 0.0134,
-    "val_ece_after": 0.0118,
-    "test_ece_before": 0.0349,
-    "test_ece_after": 0.0278
+    "fitted_on": "val",
+    "val": {
+      "ece_before": 0.0134,
+      "ece_after": 0.0118
+    },
+    "test": {
+      "ece_before": 0.0349,
+      "ece_after": 0.0278
+    }
   },
   "selective": {
-    "tau_accept": 0.561777,
-    "coverage": 0.9856,
-    "total_test_samples": 624,
-    "accepted_count": 615,
-    "abstained_count": 9,
-    "accepted_accuracy": 0.9577,
-    "accepted_sensitivity": 0.9897,
-    "accepted_specificity": 0.9027,
-    "accepted_error_rate": 0.0423,
-    "abstained_error_rate": 0.2222
-  },
-  "error_analysis": {
-    "test_total_fn": 4,
-    "test_fn_abstained": 0,
-    "test_fn_accepted": 4,
-    "test_total_fp": 24,
-    "test_fp_abstained": 2,
-    "test_fp_accepted": 22,
-    "fn_sample_indices": [
-      88,
-      571,
-      598,
-      604
-    ]
+    "test": {
+      "tau_accept": 0.561777,
+      "tau_low_uncertainty": 0.565799,
+      "coverage": 0.9856,
+      "accepted_accuracy": 0.9577,
+      "accepted_sensitivity": 0.9897,
+      "accepted_specificity": 0.9027,
+      "abstained_count": 9,
+      "fallback": false
+    },
+    "val": {
+      "tau_accept": 0.561777,
+      "tau_low_uncertainty": 0.565799,
+      "coverage": 0.9981,
+      "accepted_accuracy": 0.9809,
+      "accepted_sensitivity": 0.9794,
+      "accepted_specificity": 0.9852,
+      "abstained_count": 1,
+      "fallback": false
+    }
   },
   "quality_eval": {
     "val_false_rejection_rate": 0.01,
@@ -315,6 +332,20 @@
       "n_samples": 100,
       "note": "Ordering A (Quality then OOD) correctly attributes blur/darkness to image quality rather than misclassifying degraded chest radiographs as non-medical OOD."
     }
+  },
+  "error_analysis": {
+    "test_total_fn": 4,
+    "test_fn_abstained": 0,
+    "test_fn_accepted": 4,
+    "test_total_fp": 24,
+    "test_fp_abstained": 2,
+    "test_fp_accepted": 22,
+    "fn_sample_indices": [
+      88,
+      571,
+      598,
+      604
+    ]
   },
   "limitations": [
     "Educational research prototype; not a medical device and not a clinical diagnosis.",

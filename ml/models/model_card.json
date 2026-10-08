@@ -1,5 +1,6 @@
 {
-  "model_name": "MedGuard AI ResNet-18 Chest X-Ray Classifier",
+  "model_name": "ResNet-18 (ImageNet-pretrained, fine-tuned)",
+  "dataset": "PneumoniaMNIST+ (224x224)",
   "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
   "base_model": "torchvision.models.resnet18",
   "task": "Binary Classification (Normal vs Pneumonia)",

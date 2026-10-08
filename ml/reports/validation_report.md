@@ -1,9 +1,10 @@
 # MedGuard AI — Model Validation Report
 
+**Schema Version:** `1.0`  
 **Model Version:** `resnet18-pneumoniamnist224-v1+9bda2caa`  
-**Evaluated UTC:** `2026-10-08T05:47:27.827171+00:00`  
+**Generated At:** `2026-10-08T06:05:34.372489+00:00`  
 **Hardware Device:** `cuda`  
-**Dataset:** PneumoniaMNIST+ 224x224 (Pediatric Chest X-Ray Benchmark)
+**Dataset:** PneumoniaMNIST+ (224x224) (224x224)
 
 ---
 
@@ -44,10 +45,9 @@ Fitted on **Validation Split** (N = 524):
 
 Threshold $\tau_{\text{accept}}$ fitted on validation set: **0.5618**
 
-- **Coverage on Test Set:** **98.6%** (615 / 624)
+- **Coverage on Test Set:** **98.6%**
 - **Abstained (Uncertain):** **9** samples
-- **Accuracy on Accepted Samples:** **0.9577** (Error rate: 0.0423)
-- **Error Rate among Abstained Samples:** **0.2222**
+- **Accuracy on Accepted Samples:** **0.9577**
 - **False Negatives Caught by Abstention:** 0 out of 4 total FNs
 
 ---

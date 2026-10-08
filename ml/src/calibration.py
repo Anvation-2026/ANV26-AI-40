@@ -12,7 +12,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 # Path bootstrap
-from src import _ML_ROOT  # noqa: F401
+try:
+    from src import _ML_ROOT  # noqa: F401  # python -m src.x from ml/
+except ModuleNotFoundError:
+    import _pathfix  # noqa: F401  # python x.py from ml/src/
 
 from config import (
     DEFAULT_MIN_COVERAGE,

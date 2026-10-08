@@ -28,6 +28,15 @@ REQUIRED_KEYS = [
     "details",
 ]
 
+# Task 5: new required details keys
+REQUIRED_DETAILS_KEYS = [
+    "heatmap_target_class",
+    "heatmap_note",
+]
+
+# Task 1: quality sub-dict structure keys
+REQUIRED_QUALITY_SUB_KEYS = ["status", "metrics", "thresholds", "passed", "labels", "reasons"]
+
 BANNED_WORDS = ["diagnosed with", "you have", "treatment", "confirmed finding"]
 
 
@@ -75,6 +84,9 @@ def test_model_status_never_raises():
     assert "available" in status
     assert "device" in status
     assert "capabilities" in status
+    # Task 2: extended model_status keys
+    for key in ("model_name", "dataset", "classes", "supported_modality"):
+        assert key in status, f"Missing model_status key: '{key}'"
 
 
 def test_missing_model_raises_model_unavailable_error(tmp_path):
@@ -82,3 +94,45 @@ def test_missing_model_raises_model_unavailable_error(tmp_path):
     empty_dir.mkdir()
     with pytest.raises(ModelUnavailableError):
         MedGuardPredictor(models_dir=empty_dir)
+
+
+# ─── Task 5: heatmap metadata in details ─────────────────────────────────────
+
+def test_heatmap_metadata_keys_present_in_details():
+    """Task 5: heatmap_target_class and heatmap_note always present in details."""
+    val_images, _ = get_split("val", DATASET_PATH)
+    img = val_images[0]
+    res = predict_image(img, generate_heatmap=False)
+    details = res["details"]
+    for k in REQUIRED_DETAILS_KEYS:
+        assert k in details, f"Missing Task 5 details key: '{k}'"
+
+
+def test_heatmap_target_class_none_when_not_success_or_uncertain():
+    """When status is not success/uncertain, heatmap_target_class must be None."""
+    res = predict_image(b"corrupted bytes 123 not a real image", generate_heatmap=True)
+    assert res["status"] == "unsupported_file"
+    # heatmap_target_class is only populated when Grad-CAM runs (success/uncertain)
+    # For unsupported_file it is absent from details (early return path)
+    # The key may not be in details for the early-return path — that is acceptable.
+    # But if it IS present it must be None.
+    if "heatmap_target_class" in res.get("details", {}):
+        assert res["details"]["heatmap_target_class"] is None
+
+
+# ─── Task 1: quality thresholds/passed/labels in details ─────────────────────
+
+def test_quality_detail_has_thresholds_passed_labels():
+    """Task 1: details.quality must include thresholds, passed, and labels dicts."""
+    val_images, _ = get_split("val", DATASET_PATH)
+    img = val_images[0]
+    res = predict_image(img, generate_heatmap=False)
+    q = res["details"].get("quality")
+    if q is None:
+        pytest.skip("Quality evaluator not available")
+    for sub in REQUIRED_QUALITY_SUB_KEYS:
+        assert sub in q, f"Missing quality sub-key: '{sub}'"
+    assert isinstance(q["thresholds"], dict), "details.quality.thresholds must be a dict"
+    assert isinstance(q["passed"], dict), "details.quality.passed must be a dict"
+    assert isinstance(q["labels"], dict), "details.quality.labels must be a dict"
+

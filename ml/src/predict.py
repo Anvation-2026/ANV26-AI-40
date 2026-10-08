@@ -2,6 +2,7 @@ import argparse
 import base64
 import io
 import json
+import logging
 from pathlib import Path
 import threading
 import time
@@ -14,8 +15,13 @@ from PIL import Image
 import torch
 import torch.nn as nn
 
+log = logging.getLogger(__name__)
+
 # Path bootstrap
-from src import _ML_ROOT  # noqa: F401
+try:
+    from src import _ML_ROOT  # noqa: F401  # python -m src.x from ml/
+except ModuleNotFoundError:
+    import _pathfix  # noqa: F401  # python x.py from ml/src/
 
 from config import (
     CLASS_NAMES,
@@ -69,6 +75,11 @@ class MedGuardPredictor:
         try:
             self.model, self.metadata = load_checkpoint(ckpt_path, device=self.device_str)
             self.model_version = self.metadata.get("full_model_version", "resnet18-pneumoniamnist224-v1")
+            self.model_name = "ResNet-18 (ImageNet-pretrained, fine-tuned)"
+            ds_info = self.metadata.get("dataset", {})
+            self.dataset_name = ds_info.get("name", "PneumoniaMNIST+ (224x224)") if isinstance(ds_info, dict) else "PneumoniaMNIST+ (224x224)"
+            self.classes = self.metadata.get("class_names", ["normal", "pneumonia"])
+            self.supported_modality = "Chest X-ray (educational, pediatric benchmark)"
         except Exception as e:
             raise ModelUnavailableError(f"Failed to load checkpoint at {ckpt_path}: {e}") from e
 
@@ -101,7 +112,7 @@ class MedGuardPredictor:
                     self.temperature = float(cal_data.get("temperature", 1.0))
                     self.capabilities["calibration"] = True
             except Exception as e:
-                print(f"[Predictor] Warning: Failed loading calibration.json: {e}")
+                log.warning("Failed loading calibration.json: %s", e)
 
         # Load Thresholds artifact
         thresh_path = self.models_dir / "thresholds.json"
@@ -114,7 +125,7 @@ class MedGuardPredictor:
                     self.thresholds["decision_threshold"] = float(th_data.get("decision_threshold", 0.50))
                     self.capabilities["uncertainty"] = True
             except Exception as e:
-                print(f"[Predictor] Warning: Failed loading thresholds.json: {e}")
+                log.warning("Failed loading thresholds.json: %s", e)
 
         # Optional Quality module
         quality_path = self.models_dir / "quality_thresholds.json"
@@ -124,7 +135,7 @@ class MedGuardPredictor:
                 self.quality_evaluator = QualityGate(quality_path)
                 self.capabilities["quality"] = True
             except Exception as e:
-                print(f"[Predictor] Warning: Failed to initialize QualityGate: {e}")
+                log.warning("Failed to initialize QualityGate: %s", e)
 
         # Optional OOD module
         ood_path = self.models_dir / "ood_stats.npz"
@@ -134,7 +145,7 @@ class MedGuardPredictor:
                 self.ood_evaluator = OODDetector(ood_path, thresh_path)
                 self.capabilities["ood"] = True
             except Exception as e:
-                print(f"[Predictor] Warning: Failed to initialize OODDetector: {e}")
+                log.warning("Failed to initialize OODDetector: %s", e)
 
         # Optional Grad-CAM module
         try:
@@ -260,6 +271,9 @@ class MedGuardPredictor:
                 "contrast_p99_p1": 0.0,
                 "noise_sigma": 0.0,
             },
+            "thresholds": None,
+            "passed": None,
+            "labels": None,
             "reasons": [],
         }
         if self.quality_evaluator is not None:
@@ -286,7 +300,7 @@ class MedGuardPredictor:
                 with torch.set_grad_enabled(generate_heatmap and self.gradcam_engine is not None):
                     logits, penultimate_features = self._forward_with_features(tensor)
             except torch.cuda.OutOfMemoryError:
-                print("[Predictor] CUDA OOM during inference! Falling back to CPU for this request.")
+                log.warning("CUDA OOM during inference — falling back to CPU for this request.")
                 torch.cuda.empty_cache()
                 self.device_str = "cpu"
                 self.device = torch.device("cpu")
@@ -298,6 +312,9 @@ class MedGuardPredictor:
         # Feature-space OOD score update if evaluator supports it
         if self.ood_evaluator is not None and penultimate_features is not None:
             ood_res = self.ood_evaluator.score_features(penultimate_features.detach().cpu().numpy(), ood_res)
+
+        # Sanitize OOD dict: convert numpy scalars -> Python natives
+        ood_res = self._sanitize_json(ood_res)
 
         # Compute probabilities
         logits_np = logits.detach().cpu().squeeze().numpy()
@@ -362,45 +379,59 @@ class MedGuardPredictor:
         # Grad-CAM overlay generation
         heatmap_path = None
         heatmap_base64 = None
+        heatmap_target_class: Optional[str] = None
+        heatmap_note: Optional[str] = None
 
-        if generate_heatmap and (status in ["success", "uncertain"]) and (self.gradcam_engine is not None):
-            try:
-                target_class = int(np.argmax(p_calibrated))
-                hm_dir = Path(heatmap_dir) if heatmap_dir else HEATMAPS_DIR
-                hm_dir.mkdir(parents=True, exist_ok=True)
-                unique_name = f"cam_{uuid.uuid4().hex[:12]}.png"
-                full_hm_path = hm_dir / unique_name
-
-                # Generate and save heatmap overlay
-                overlay_arr = self.gradcam_engine.generate(
-                    tensor,
-                    gray224,
-                    target_class=target_class,
-                    save_path=full_hm_path,
-                )
-
-                # Path relative to OUTPUTS_DIR
+        if generate_heatmap and self.gradcam_engine is not None:
+            if status in ["success", "uncertain"]:
                 try:
-                    heatmap_path = str(full_hm_path.relative_to(OUTPUTS_DIR)).replace("\\", "/")
-                except ValueError:
-                    heatmap_path = str(full_hm_path).replace("\\", "/")
+                    target_class_idx = int(np.argmax(p_calibrated))
+                    heatmap_target_class = CLASS_NAMES[target_class_idx]
+                    hm_dir = Path(heatmap_dir) if heatmap_dir else HEATMAPS_DIR
+                    hm_dir.mkdir(parents=True, exist_ok=True)
+                    unique_name = f"cam_{uuid.uuid4().hex[:12]}.png"
+                    full_hm_path = hm_dir / unique_name
 
-                if include_base64 and overlay_arr is not None:
-                    # Encode to PNG base64
-                    success_enc, buffer = cv2.imencode(".png", overlay_arr)
-                    if success_enc:
-                        heatmap_base64 = base64.b64encode(buffer).decode("utf-8")
+                    # Generate and save heatmap overlay
+                    overlay_arr = self.gradcam_engine.generate(
+                        tensor,
+                        gray224,
+                        target_class=target_class_idx,
+                        save_path=full_hm_path,
+                    )
 
-                # Cleanup old heatmaps
-                self._cleanup_old_heatmaps(hm_dir, max_files=200)
+                    # Path relative to OUTPUTS_DIR
+                    try:
+                        heatmap_path = str(full_hm_path.relative_to(OUTPUTS_DIR)).replace("\\", "/")
+                    except ValueError:
+                        heatmap_path = str(full_hm_path).replace("\\", "/")
 
-            except Exception as e:
-                print(f"[Predictor] Warning: Grad-CAM generation failed: {e}")
-                heatmap_path = None
+                    if include_base64 and overlay_arr is not None:
+                        # Encode to PNG base64 (no data-URI prefix)
+                        success_enc, buffer = cv2.imencode(".png", overlay_arr)
+                        if success_enc:
+                            heatmap_base64 = base64.b64encode(buffer).decode("utf-8")
+
+                    if status == "uncertain":
+                        heatmap_note = (
+                            "Heatmap generated but confidence is below acceptance threshold; "
+                            "visual attribution may be unreliable."
+                        )
+
+                    # Cleanup old heatmaps
+                    self._cleanup_old_heatmaps(hm_dir, max_files=200)
+
+                except Exception as e:
+                    log.warning("Grad-CAM generation failed: %s", e)
+                    heatmap_path = None
+                    heatmap_target_class = None
+            else:
+                # Status is rejected — heatmap intentionally suppressed
+                heatmap_note = f"Heatmap suppressed: status is '{status}'"
 
         inference_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
-        details = {
+        details: Dict[str, Any] = {
             "p_pneumonia_raw": round(p_pneumonia_raw, 4),
             "p_pneumonia_calibrated": round(p_pneumonia_cal, 4),
             "confidence": round(conf, 4),
@@ -414,6 +445,9 @@ class MedGuardPredictor:
             "inference_ms": inference_ms,
             "device": self.device_str,
             "capabilities": self.capabilities,
+            # Task 5: heatmap metadata for UI suppression logic
+            "heatmap_target_class": heatmap_target_class,
+            "heatmap_note": heatmap_note,
         }
         if include_base64 and heatmap_base64 is not None:
             details["heatmap_base64"] = heatmap_base64
@@ -466,6 +500,21 @@ class MedGuardPredictor:
         return logits, features_flat
 
     @staticmethod
+    def _sanitize_json(obj: Any) -> Any:
+        """
+        Recursively converts numpy scalars to native Python types so that
+        json.dumps() does not raise TypeError on np.bool_, np.int*, np.float*.
+        """
+        if isinstance(obj, dict):
+            return {k: MedGuardPredictor._sanitize_json(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [MedGuardPredictor._sanitize_json(v) for v in obj]
+        # numpy scalar types
+        if hasattr(obj, "item"):  # np.generic has .item()
+            return obj.item()
+        return obj
+
+    @staticmethod
     def _cleanup_old_heatmaps(dir_path: Path, max_files: int = 200) -> None:
         """Removes oldest heatmap files if count exceeds max_files."""
         try:
@@ -509,7 +558,11 @@ def model_status() -> Dict[str, Any]:
 
         return {
             "available": True,
+            "model_name": predictor.model_name,
             "model_version": predictor.model_version,
+            "dataset": predictor.dataset_name,
+            "classes": predictor.classes,
+            "supported_modality": predictor.supported_modality,
             "device": predictor.device_str,
             "gpu_name": gpu_name,
             "capabilities": predictor.capabilities,
@@ -522,7 +575,11 @@ def model_status() -> Dict[str, Any]:
         gpu_name = torch.cuda.get_device_name(0) if use_cuda else "N/A"
         return {
             "available": False,
+            "model_name": None,
             "model_version": "unavailable",
+            "dataset": None,
+            "classes": ["normal", "pneumonia"],
+            "supported_modality": "Chest X-ray (educational, pediatric benchmark)",
             "device": "cuda" if use_cuda else "cpu",
             "gpu_name": gpu_name,
             "capabilities": {
