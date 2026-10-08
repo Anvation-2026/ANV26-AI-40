@@ -141,9 +141,12 @@ def predict(image: Any) -> Dict[str, Any]:
     finding = raw.get("finding") if is_success else None
 
     # Calibrated probability & raw score
-    p_cal = details.get("p_pneumonia_calibrated")
-    if p_cal is None and raw.get("probability") is not None:
-        p_cal = raw.get("probability")
+    p_cal = raw.get("probability")
+    if p_cal is None and details.get("p_pneumonia_calibrated") is not None:
+        p_pneumonia_cal = details.get("p_pneumonia_calibrated")
+        p_cal = (1.0 - p_pneumonia_cal) if finding == "normal" else p_pneumonia_cal
+    elif p_cal is None:
+        p_cal = details.get("p_pneumonia_calibrated")
 
     p_raw = details.get("p_pneumonia_raw")
     prob_of = "pneumonia" if finding == "pneumonia" else ("normal" if finding == "normal" else "pneumonia")

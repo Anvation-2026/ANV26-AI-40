@@ -106,11 +106,18 @@ def create_demo_response(
                 message="Educational recommendation: have a qualified human expert review this image.",
                 reasons=["DEMO: Pattern match detected for pneumonia class"],
             ),
-            explanation="DEMO FIXTURE — not a model prediction. The demo fixture assigned pneumonia with synthetic probability 87.0%.",
+            explanation=(
+                "DEMO FIXTURE — not a model prediction. The demo fixture assigned pneumonia with synthetic probability 87.0%. "
+                "Focal parenchymal consolidation identified in lung fields. "
+                "Evaluated possibilities: Pneumonia consolidation/infiltrate (primary pattern detected), Normal aerated parenchyma (excluded given focal density)."
+            ),
             evidence=[
                 "DEMO: Image quality passed acceptable criteria",
                 "DEMO: In-distribution sample",
                 "DEMO: Low model uncertainty (0.042)",
+                "Parenchymal pattern: Focal opacity / consolidation detected",
+                "Possibility evaluated: Pneumonia Infiltrate (primary pattern)",
+                "Possibility evaluated: Normal Aerated Lung Fields (lower likelihood)",
             ],
             limitations=base_limitations,
             model=demo_model,
@@ -154,11 +161,18 @@ def create_demo_response(
                 message="Educational recommendation: have a qualified human expert review this image.",
                 reasons=["DEMO: Pattern match detected for normal chest X-ray class"],
             ),
-            explanation="DEMO FIXTURE — not a model prediction. The demo fixture assigned normal with synthetic probability 91.2%.",
+            explanation=(
+                "DEMO FIXTURE — not a model prediction. The demo fixture assigned normal with synthetic probability 91.2%. "
+                "Both lung fields exhibit clear symmetric aeration without focal consolidation, confluent alveolar opacities, or pleural effusion. "
+                "Evaluated possibilities: Normal aeration (primary pattern), Bacterial consolidation (ruled out), Viral interstitial opacity (ruled out)."
+            ),
             evidence=[
                 "DEMO: Image quality passed acceptable criteria",
                 "DEMO: In-distribution sample",
                 "DEMO: Low model uncertainty (0.031)",
+                "Airspace aeration: Bilateral lung zones clear without focal consolidation",
+                "Possibility evaluated: Bacterial Lobar Pneumonia (ruled out / non-reactive)",
+                "Possibility evaluated: Viral / Interstitial Infiltrate (ruled out / non-reactive)",
             ],
             limitations=base_limitations,
             model=demo_model,

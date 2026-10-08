@@ -32,15 +32,22 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             Model-Grounded Evidence Observations
           </h4>
           <ul className="space-y-1.5">
-            {evidence.map((item, idx) => (
-              <li
-                key={idx}
-                className="text-xs text-navy-foreground flex items-start gap-2 bg-canvas p-2 rounded-[8px] border border-border/60"
-              >
-                <Check className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
-                <span className="leading-tight">{item}</span>
-              </li>
-            ))}
+            {evidence.map((item, idx) => {
+              const isPossibility = item.toLowerCase().includes('possibility evaluated') || item.toLowerCase().includes('differential consideration');
+              return (
+                <li
+                  key={idx}
+                  className={`text-xs flex items-start gap-2 p-2 rounded-[8px] border ${
+                    isPossibility
+                      ? 'bg-teal-50/50 border-teal-200/70 text-navy-foreground'
+                      : 'bg-canvas border-border/60 text-navy-foreground'
+                  }`}
+                >
+                  <Check className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${isPossibility ? 'text-teal-800 font-bold' : 'text-teal-700'}`} />
+                  <span className="leading-tight">{item}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
