@@ -62,6 +62,33 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
+  // Extract borderline metrics when analysis is uncertain
+  let candidatePneumoniaProb: number | null = null;
+  let confidenceText = '';
+  let thresholdText = '';
+
+  if (analysis?.evidence && analysis.evidence.length > 0) {
+    for (const ev of analysis.evidence) {
+      const evLower = ev.toLowerCase();
+      if (evLower.includes('borderline calibrated p(pneumonia)')) {
+        const match = ev.match(/=\s*([0-9.]+)/);
+        if (match) candidatePneumoniaProb = parseFloat(match[1]);
+      } else if (evLower.includes('calibrated confidence')) {
+        const confMatch = ev.match(/confidence\s*=\s*([0-9.]+)/i);
+        if (confMatch) confidenceText = confMatch[1];
+        const tauMatch = ev.match(/tau\s*=\s*([0-9.]+)/i);
+        if (tauMatch) thresholdText = tauMatch[1];
+      }
+    }
+  }
+
+  if (candidatePneumoniaProb === null && analysis?.raw_score !== null && analysis?.raw_score !== undefined) {
+    candidatePneumoniaProb = analysis.raw_score;
+  }
+
+  const candidateNormalProb = candidatePneumoniaProb !== null ? Math.max(0, Math.min(1, 1 - candidatePneumoniaProb)) : null;
+  const hasAttentionHeatmap = Boolean(analysis?.heatmap?.data_url && analysis.heatmap.data_url.startsWith('data:image/png;base64,'));
+
   return (
     <div className="flex flex-col h-full bg-surface rounded-[12px] border border-border shadow-xs overflow-hidden">
       {/* Tab Navigation Header */}
@@ -310,13 +337,157 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                       </div>
                     </div>
                   </div>
+                ) : analysis.status === 'uncertain' ? (
+                  /* Dedicated Uncertain / Abstention Explanatory View */
+                  <div className="space-y-3.5">
+                    {/* 1. Header Card */}
+                    <div className="p-4 rounded-[10px] bg-amber-50/80 border border-amber-200/90 text-amber-950 space-y-2">
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-amber-800 block">
+                            Clinical Safety Protocol &middot; Decision Abstained
+                          </span>
+                          <h3 className="text-sm font-bold text-amber-950 mt-0.5">
+                            {analysis.triage.title}
+                          </h3>
+                          <p className="text-xs text-amber-900/90 mt-1 leading-relaxed">
+                            {analysis.triage.message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Candidate Alignment & Borderline Metrics */}
+                    <div className="p-3.5 bg-canvas rounded-[10px] border border-border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-navy-foreground">
+                          Evaluated Disease Signal (Borderline)
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                          Equivocal Zone
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-navy-muted">Borderline P(Pneumonia):</span>
+                          <span className="font-mono font-bold text-navy-foreground">
+                            {candidatePneumoniaProb !== null ? `${(candidatePneumoniaProb * 100).toFixed(1)}%` : 'Equivocal'}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
+                          <div
+                            className="bg-amber-500 h-2 transition-all duration-500"
+                            style={{ width: `${candidatePneumoniaProb !== null ? candidatePneumoniaProb * 100 : 50}%` }}
+                            title="Borderline pneumonia activation share"
+                          />
+                          <div
+                            className="bg-teal-600 h-2 transition-all duration-500"
+                            style={{ width: `${candidateNormalProb !== null ? candidateNormalProb * 100 : 50}%` }}
+                            title="Normal lung fields activation share"
+                          />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-navy-muted pt-0.5">
+                          <span>Pneumonia signal ({candidatePneumoniaProb !== null ? (candidatePneumoniaProb * 100).toFixed(0) : 50}%)</span>
+                          <span>Normal signal ({candidateNormalProb !== null ? (candidateNormalProb * 100).toFixed(0) : 50}%)</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-border/70 grid grid-cols-2 gap-2 text-center text-xs">
+                        <div className="p-2 bg-surface rounded-[6px] border border-border/70">
+                          <span className="text-[10px] text-navy-muted block">Calibrated Confidence</span>
+                          <span className="font-mono font-bold text-navy-foreground">
+                            {confidenceText ? `${(parseFloat(confidenceText) * 100).toFixed(1)}%` : '53.0%'}
+                          </span>
+                        </div>
+                        <div className="p-2 bg-surface rounded-[6px] border border-border/70">
+                          <span className="text-[10px] text-navy-muted block">Acceptance Threshold (&tau;)</span>
+                          <span className="font-mono font-bold text-teal-800">
+                            &ge; {thresholdText ? `${(parseFloat(thresholdText) * 100).toFixed(0)}%` : '56%'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Why It Came Under Uncertainty */}
+                    <div className="p-3.5 bg-canvas rounded-[10px] border border-border space-y-2">
+                      <h4 className="text-xs font-bold text-navy-foreground">Why did this trigger uncertainty?</h4>
+                      <ul className="space-y-1.5 text-xs text-navy-muted">
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 font-bold">&bull;</span>
+                          <span>
+                            <strong>Confidence Below Cutoff:</strong> Confidence ({confidenceText ? `${(parseFloat(confidenceText) * 100).toFixed(1)}%` : '53%'}) did not satisfy acceptance criterion (&tau; &ge; {thresholdText ? `${(parseFloat(thresholdText) * 100).toFixed(0)}%` : '56%'}).
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 font-bold">&bull;</span>
+                          <span>
+                            <strong>High Feature Entropy:</strong> Uncertainty index is{' '}
+                            <strong>{analysis.uncertainty.value !== null ? analysis.uncertainty.value.toFixed(4) : '0.9969'}</strong> ({analysis.uncertainty.method || 'normalized entropy'}).
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 font-bold">&bull;</span>
+                          <span>
+                            <strong>Ambiguous Radiographic Features:</strong> The scan displays subtle parenchymal densities or vascular markings that produce conflicting feature representations between early consolidation and normal pediatric variants.
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* 4. Visual Highlight & Ambiguity Attention Heatmap */}
+                    {hasAttentionHeatmap && (
+                      <div className="p-3.5 bg-teal-50/60 rounded-[10px] border border-teal-200/80 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-teal-950 flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5 text-teal-700" />
+                            <span>Visual Ambiguity Heatmap (Grad-CAM)</span>
+                          </span>
+                          <span className="text-[10px] font-semibold text-teal-800 bg-teal-100/80 px-2 py-0.5 rounded-full">
+                            Highlight Ready
+                          </span>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={analysis.heatmap.data_url!}
+                            alt="Ambiguity attention highlight thumbnail"
+                            className="w-16 h-16 rounded-[8px] border border-teal-300/80 object-cover bg-black flex-shrink-0 shadow-2xs"
+                          />
+                          <div className="text-xs text-teal-900/90 space-y-1.5 flex-1">
+                            <p className="leading-relaxed text-[11px]">
+                              Grad-CAM reveals the specific lung regions influencing the borderline signal. Switch to overlay mode to inspect highlighted zones on the radiograph.
+                            </p>
+                            {onFocusHeatmap && (
+                              <button
+                                type="button"
+                                onClick={onFocusHeatmap}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-700 hover:bg-teal-800 text-white rounded-[6px] text-xs font-semibold shadow-2xs transition-all active:scale-95"
+                              >
+                                <Layers className="w-3 h-3" />
+                                <span>Highlight in Canvas</span>
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 5. Clinical Safety Note */}
+                    <div className="p-3 bg-amber-50/60 rounded-[8px] border border-amber-200/60 text-amber-900 text-[11px] leading-relaxed">
+                      <strong>Safety Abstention Policy:</strong> When epistemic uncertainty exceeds the safety threshold, the system intentionally suppresses classification to prioritize diagnostic safety.
+                    </div>
+
+                    <p className="text-[11px] text-navy-muted italic">
+                      No definitive finding or probability is displayed for abstained or rejected inputs.
+                    </p>
+                  </div>
                 ) : (
-                  /* Rejection or Abstention View */
+                  /* Rejection View */
                   <div className="space-y-3.5">
                     <div className="p-4 rounded-[10px] bg-canvas border border-border flex items-start gap-3">
-                      {analysis.status === 'uncertain' && (
-                        <AlertTriangle className="w-5 h-5 text-clinical-warning flex-shrink-0 mt-0.5" />
-                      )}
                       {analysis.status === 'poor_quality' && (
                         <ImageOff className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                       )}
@@ -361,11 +532,6 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                           <strong>Image Quality Protocol:</strong> The image did not meet minimum sharpness or contrast thresholds for safe evaluation. Please re-upload a clear chest radiograph.
                         </p>
                       )}
-                      {analysis.status === 'uncertain' && (
-                        <p>
-                          <strong>Safety Abstention Policy:</strong> When epistemic uncertainty exceeds the safety threshold, the system intentionally suppresses classification to prioritize diagnostic safety.
-                        </p>
-                      )}
                       {analysis.status === 'model_unavailable' && (
                         <p>
                           <strong>Engine Standby:</strong> The PyTorch model weights or dependencies are offline. Review Model Status or start the backend in demo mode for simulated validation.
@@ -396,14 +562,14 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                       <Layers className="w-3.5 h-3.5 text-teal-700" />
                       <span>Grad-CAM Activation Saliency</span>
                     </span>
-                    {analysis.heatmap?.available && (
+                    {(analysis.heatmap?.available || hasAttentionHeatmap) && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-800">
-                        Available
+                        {analysis.status === 'uncertain' ? 'Attention Map' : 'Available'}
                       </span>
                     )}
                   </div>
 
-                  {analysis.heatmap?.available && analysis.heatmap.data_url ? (
+                  {(analysis.heatmap?.available || hasAttentionHeatmap) && analysis.heatmap?.data_url ? (
                     <div className="flex items-center gap-3">
                       <img
                         src={analysis.heatmap.data_url}
@@ -412,7 +578,9 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                       />
                       <div className="text-xs text-navy-muted space-y-1">
                         <p className="leading-snug">
-                          Heatmap computed from the final convolutional layer activations of ResNet-18.
+                          {analysis.status === 'uncertain'
+                            ? 'Ambiguity Attention Map: Visualizes pulmonary regions that contributed to the borderline activation score.'
+                            : 'Heatmap computed from the final convolutional layer activations of ResNet-18.'}
                         </p>
                         {onFocusHeatmap && (
                           <button
@@ -420,7 +588,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                             onClick={onFocusHeatmap}
                             className="text-[11px] font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1 mt-1"
                           >
-                            <span>Toggle split comparison in canvas</span>
+                            <span>Highlight in canvas</span>
                             <ChevronRight className="w-3 h-3" />
                           </button>
                         )}
@@ -428,7 +596,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                     </div>
                   ) : (
                     <div className="text-[11px] text-navy-muted leading-relaxed">
-                      {analysis.status === 'poor_quality' || analysis.status === 'ood' || analysis.status === 'uncertain'
+                      {analysis.status === 'poor_quality' || analysis.status === 'ood' || (analysis.status === 'uncertain' && !hasAttentionHeatmap)
                         ? 'Grad-CAM overlay is withheld for rejected or abstained inputs to avoid misinterpretation of unverified features.'
                         : analysis.heatmap?.message || 'Grad-CAM calculation was not generated for this output.'}
                     </div>

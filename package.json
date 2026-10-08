@@ -1,0 +1,11 @@
+{
+  "name": "anvation-team-vouken",
+  "private": true,
+  "description": "MedGuard AI - Clinical Evidence & Triage Support System",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix frontend run test",
+    "start": "powershell -ExecutionPolicy Bypass -File ./start.ps1"
+  }
+}

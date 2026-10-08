@@ -22,6 +22,7 @@ export const Workspace: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [activeInspectorTab, setActiveInspectorTab] = useState<InspectorTab>('finding');
+  const [viewMode, setViewMode] = useState<'overlay' | 'original' | 'split' | 'side_by_side'>('overlay');
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const timeoutIdRef = useRef<number | null>(null);
@@ -185,6 +186,14 @@ export const Workspace: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={() => loadSamplePreset('/assets/demo-uncertain.png', 'sample-uncertain.png')}
+              disabled={loading}
+              className="px-2.5 py-1 text-[11px] font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 active:scale-95 border border-amber-200 rounded-[6px] transition-all"
+            >
+              Uncertain
+            </button>
+            <button
+              type="button"
               onClick={() => loadSamplePreset('/assets/demo-blurred.png', 'sample-blurred.png')}
               disabled={loading}
               className="px-2.5 py-1 text-[11px] font-medium text-navy-muted hover:text-navy-foreground bg-canvas hover:bg-slate-200/80 active:scale-95 border border-border rounded-[6px] transition-all"
@@ -261,6 +270,8 @@ export const Workspace: React.FC = () => {
             onClear={handleClear}
             fileName={selectedFile?.name}
             fileSize={selectedFile?.size}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
             className="flex-1"
           />
         </div>
@@ -276,6 +287,10 @@ export const Workspace: React.FC = () => {
             onClear={handleClear}
             activeTab={activeInspectorTab}
             onTabChange={setActiveInspectorTab}
+            onFocusHeatmap={() => {
+              setViewMode('overlay');
+              showToast('Overlaying ambiguity attention highlight', 'info');
+            }}
           />
         </div>
       </div>

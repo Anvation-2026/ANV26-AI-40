@@ -28,6 +28,8 @@ export interface XrayViewerProps {
   onClear?: () => void;
   fileName?: string;
   fileSize?: number;
+  viewMode?: 'overlay' | 'original' | 'split' | 'side_by_side';
+  onViewModeChange?: (mode: 'overlay' | 'original' | 'split' | 'side_by_side') => void;
 }
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -43,12 +45,21 @@ export const XrayViewer: React.FC<XrayViewerProps> = ({
   loading = false,
   fileName,
   fileSize,
+  viewMode: controlledViewMode,
+  onViewModeChange,
 }) => {
   const [scale, setScale] = useState<number>(1);
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [viewMode, setViewMode] = useState<'overlay' | 'original' | 'split' | 'side_by_side'>('overlay');
+  const [internalViewMode, setInternalViewMode] = useState<'overlay' | 'original' | 'split' | 'side_by_side'>('overlay');
+  
+  const viewMode = controlledViewMode ?? internalViewMode;
+  const setViewMode = useCallback((mode: 'overlay' | 'original' | 'split' | 'side_by_side') => {
+    setInternalViewMode(mode);
+    onViewModeChange?.(mode);
+  }, [onViewModeChange]);
+
   const [opacity, setOpacity] = useState<number>(0.65);
   const [splitPosition, setSplitPosition] = useState<number>(50); // percentage 0-100
   const [isDraggingSplit, setIsDraggingSplit] = useState<boolean>(false);
@@ -59,8 +70,11 @@ export const XrayViewer: React.FC<XrayViewerProps> = ({
   const viewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasHeatmap = Boolean(heatmap?.available && heatmap?.data_url?.startsWith('data:image/png;base64,'));
-  const isRejectedOrAbstained = status === 'poor_quality' || status === 'ood' || status === 'uncertain';
+  const hasHeatmap = Boolean(
+    (heatmap?.available || Boolean(heatmap?.data_url)) &&
+    heatmap?.data_url?.startsWith('data:image/png;base64,')
+  );
+  const isRejectedOrAbstained = (status === 'poor_quality' || status === 'ood') || (status === 'uncertain' && !hasHeatmap);
 
   const resetView = useCallback(() => {
     setScale(1);
@@ -347,6 +361,18 @@ export const XrayViewer: React.FC<XrayViewerProps> = ({
           </div>
         )}
 
+        {/* Ambiguity Attention Map floating badge when uncertain and heatmap is active */}
+        {hasHeatmap && status === 'uncertain' && viewMode !== 'original' && originalUrl && (
+          <div className="absolute top-3 left-3 z-20 pointer-events-none animate-fadeIn">
+            <div className="bg-[#121c27]/90 border border-amber-500/40 text-amber-200 text-[11px] px-3 py-1.5 rounded-[8px] backdrop-blur flex items-center gap-2 shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>
+                <strong>Ambiguity Attention Map:</strong> Highlighting subtle lung regions influencing borderline score
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* View Mode: Split Comparison Slider */}
         {hasHeatmap && viewMode === 'split' && originalUrl ? (
           <div className="relative w-full h-full flex items-center justify-center p-4">
@@ -505,6 +531,13 @@ export const XrayViewer: React.FC<XrayViewerProps> = ({
                         className="px-2.5 py-1 text-[11px] font-medium text-slate-200 bg-[#122434] hover:bg-teal-900/60 hover:text-teal-300 border border-white/10 rounded-[6px] transition-all"
                       >
                         Pneumonia
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onLoadSample('/assets/demo-uncertain.png', 'sample-uncertain.png')}
+                        className="px-2.5 py-1 text-[11px] font-medium text-amber-300 bg-[#122434] hover:bg-amber-950/60 hover:text-amber-200 border border-amber-500/30 rounded-[6px] transition-all"
+                      >
+                        Uncertain
                       </button>
                       <button
                         type="button"

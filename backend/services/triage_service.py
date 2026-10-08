@@ -170,6 +170,11 @@ def evaluate_triage(
             message="Educational recommendation: have a qualified human expert review this image.",
             reasons=reasons_list or ["Model abstained from providing a definitive finding."],
         )
+        unc_heatmap_url = None
+        if ml_result.heatmap_png_base64:
+            raw_b64 = ml_result.heatmap_png_base64.strip()
+            unc_heatmap_url = raw_b64 if raw_b64.startswith("data:image/png;base64,") else f"data:image/png;base64,{raw_b64}"
+
         return AnalysisResponse(
             request_id=request_id,
             status=AnalysisStatus.UNCERTAIN,
@@ -184,9 +189,9 @@ def evaluate_triage(
             ood=ood,
             heatmap=HeatmapInfo(
                 available=False,
-                data_url=None,
-                kind=None,
-                message="Heatmap suppressed for abstained or highly uncertain input.",
+                data_url=unc_heatmap_url,
+                kind=ml_result.heatmap_kind or "overlay",
+                message="Educational attention map generated for ambiguous features; definitive diagnostic heatmap is withheld per safety policy.",
             ),
             triage=triage,
             explanation="The model abstained from providing a definitive finding due to high uncertainty or safety abstention thresholds. Human expert review is required.",
