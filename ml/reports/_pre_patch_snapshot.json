@@ -1,0 +1,240 @@
+{
+  "positive_1.png": {
+    "status": "success",
+    "finding": "pneumonia",
+    "probability": 0.9996,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 1.0,
+      "p_pneumonia_calibrated": 0.9996,
+      "confidence": 0.9996,
+      "uncertainty_score": 0.0048
+    }
+  },
+  "positive_2.png": {
+    "status": "success",
+    "finding": "pneumonia",
+    "probability": 0.9996,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 1.0,
+      "p_pneumonia_calibrated": 0.9996,
+      "confidence": 0.9996,
+      "uncertainty_score": 0.005
+    }
+  },
+  "positive_3.png": {
+    "status": "success",
+    "finding": "pneumonia",
+    "probability": 0.9989,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 1.0,
+      "p_pneumonia_calibrated": 0.9989,
+      "confidence": 0.9989,
+      "uncertainty_score": 0.0123
+    }
+  },
+  "negative_1.png": {
+    "status": "success",
+    "finding": "normal",
+    "probability": 0.9991,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.0,
+      "p_pneumonia_calibrated": 0.0009,
+      "confidence": 0.9991,
+      "uncertainty_score": 0.0106
+    }
+  },
+  "negative_2.png": {
+    "status": "success",
+    "finding": "normal",
+    "probability": 0.9999,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.0,
+      "p_pneumonia_calibrated": 0.0001,
+      "confidence": 0.9999,
+      "uncertainty_score": 0.0014
+    }
+  },
+  "negative_3.png": {
+    "status": "success",
+    "finding": "normal",
+    "probability": 1.0,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.0,
+      "p_pneumonia_calibrated": 0.0,
+      "confidence": 1.0,
+      "uncertainty_score": 0.0001
+    }
+  },
+  "uncertain_1.png": {
+    "status": "uncertain",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "high",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.5041,
+      "p_pneumonia_calibrated": 0.5026,
+      "confidence": 0.5026,
+      "uncertainty_score": 1.0
+    }
+  },
+  "uncertain_2.png": {
+    "status": "uncertain",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "high",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.4475,
+      "p_pneumonia_calibrated": 0.4667,
+      "confidence": 0.5333,
+      "uncertainty_score": 0.9968
+    }
+  },
+  "uncertain_3.png": {
+    "status": "uncertain",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "high",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.4815,
+      "p_pneumonia_calibrated": 0.4882,
+      "confidence": 0.5118,
+      "uncertainty_score": 0.9996
+    }
+  },
+  "mismatch_fn_1.png": {
+    "status": "success",
+    "finding": "normal",
+    "probability": 0.9946,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.0003,
+      "p_pneumonia_calibrated": 0.0054,
+      "confidence": 0.9946,
+      "uncertainty_score": 0.0485
+    }
+  },
+  "mismatch_fn_2.png": {
+    "status": "success",
+    "finding": "normal",
+    "probability": 0.6497,
+    "uncertainty": "low",
+    "quality": "acceptable",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.274,
+      "p_pneumonia_calibrated": 0.3503,
+      "confidence": 0.6497,
+      "uncertainty_score": 0.9343
+    }
+  },
+  "poor_quality_blur.png": {
+    "status": "poor_quality",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "low",
+    "quality": "poor",
+    "ood": false,
+    "details": {
+      "p_pneumonia_raw": 0.9995,
+      "p_pneumonia_calibrated": 0.9924,
+      "confidence": 0.9924,
+      "uncertainty_score": 0.0643
+    }
+  },
+  "poor_quality_dark.png": {
+    "status": "poor_quality",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "low",
+    "quality": "poor",
+    "ood": true,
+    "details": {
+      "p_pneumonia_raw": 0.9997,
+      "p_pneumonia_calibrated": 0.994,
+      "confidence": 0.994,
+      "uncertainty_score": 0.0528
+    }
+  },
+  "poor_quality_noise.png": {
+    "status": "poor_quality",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "low",
+    "quality": "poor",
+    "ood": true,
+    "details": {
+      "p_pneumonia_raw": 1.0,
+      "p_pneumonia_calibrated": 0.9999,
+      "confidence": 0.9999,
+      "uncertainty_score": 0.0012
+    }
+  },
+  "ood_noise.png": {
+    "status": "poor_quality",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "low",
+    "quality": "poor",
+    "ood": true,
+    "details": {
+      "p_pneumonia_raw": 1.0,
+      "p_pneumonia_calibrated": 0.999,
+      "confidence": 0.999,
+      "uncertainty_score": 0.0113
+    }
+  },
+  "ood_blank.png": {
+    "status": "poor_quality",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "low",
+    "quality": "poor",
+    "ood": true,
+    "details": {
+      "p_pneumonia_raw": 0.9993,
+      "p_pneumonia_calibrated": 0.9902,
+      "confidence": 0.9902,
+      "uncertainty_score": 0.0796
+    }
+  },
+  "ood_color_photo.png": {
+    "status": "ood_rejected",
+    "finding": null,
+    "probability": null,
+    "uncertainty": "low",
+    "quality": "poor",
+    "ood": true,
+    "details": {
+      "p_pneumonia_raw": 0.9995,
+      "p_pneumonia_calibrated": 0.9921,
+      "confidence": 0.9921,
+      "uncertainty_score": 0.0666
+    }
+  }
+}

@@ -2,7 +2,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
@@ -11,7 +11,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 # Path bootstrap
-from src import _ML_ROOT  # noqa: F401
+try:
+    from src import _ML_ROOT  # noqa: F401  # python -m src.x from ml/
+except ModuleNotFoundError:
+    import _pathfix  # noqa: F401  # python x.py from ml/src/
 
 from config import (
     CLASS_NAMES,
@@ -282,61 +285,100 @@ def evaluate_full(
     test_calib_err_raw = compute_calibration_metrics(test_targets, test_probs_raw)
     test_calib_err_cal = compute_calibration_metrics(test_targets, test_probs_calib)
 
-    # Bootstrap CIs (on test split, calibrated)
+    # Bootstrap CIs (1000 resamples)
     test_boot_cis = compute_bootstrap_cis(test_targets, test_probs_calib[:, 1])
+    val_boot_cis = compute_bootstrap_cis(val_targets, val_probs_calib[:, 1])
 
     # Load thresholds for selective prediction
     thresholds_file = models_dir / "thresholds.json"
-    tau_accept = 0.80
     thresh_meta = {}
     if thresholds_file.exists():
         with open(thresholds_file, "r", encoding="utf-8") as f:
             thresh_meta = json.load(f)
-            tau_accept = float(thresh_meta.get("tau_accept", 0.80))
 
-    # Selective prediction analysis on test split
-    test_confs = np.max(test_probs_calib, axis=1)
-    accepted_mask = test_confs >= tau_accept
-    abstained_mask = ~accepted_mask
+    def format_metrics_block(
+        b_metrics: Dict[str, Any],
+        c_metrics: Dict[str, Any],
+        ci_src: Optional[Dict[str, Any]],
+        sample_count: int,
+    ) -> Dict[str, Any]:
+        formatted_ci = {}
+        for metric_name in ["accuracy", "sensitivity", "specificity", "auroc"]:
+            if ci_src and metric_name in ci_src:
+                entry = ci_src[metric_name]
+                if isinstance(entry, dict):
+                    formatted_ci[metric_name] = [
+                        round(entry.get("ci_lower", 0.0), 4),
+                        round(entry.get("ci_upper", 0.0), 4),
+                    ]
+                elif isinstance(entry, list) and len(entry) == 2:
+                    formatted_ci[metric_name] = [round(entry[0], 4), round(entry[1], 4)]
+                else:
+                    formatted_ci[metric_name] = [round(b_metrics[metric_name], 4), round(b_metrics[metric_name], 4)]
+            else:
+                val = round(b_metrics[metric_name], 4)
+                formatted_ci[metric_name] = [val, val]
 
-    accepted_count = int(np.sum(accepted_mask))
-    abstained_count = int(np.sum(abstained_mask))
-    total_test = len(test_targets)
-    coverage = float(accepted_count / total_test) if total_test > 0 else 0.0
+        return {
+            "n": sample_count,
+            "accuracy": round(b_metrics["accuracy"], 4),
+            "precision": round(b_metrics["precision"], 4),
+            "recall": round(b_metrics["sensitivity"], 4),
+            "sensitivity": round(b_metrics["sensitivity"], 4),
+            "specificity": round(b_metrics["specificity"], 4),
+            "f1": round(b_metrics["f1"], 4),
+            "auroc": round(b_metrics["auroc"], 4),
+            "false_negative_rate": round(b_metrics["false_negative_rate"], 4),
+            "false_positive_rate": round(b_metrics["false_positive_rate"], 4),
+            "ece": round(c_metrics["ece"], 4),
+            "brier": round(c_metrics["brier_score"], 4),
+            "nll": round(c_metrics["nll"], 4),
+            "confusion_matrix": {
+                "labels": ["normal", "pneumonia"],
+                "matrix": b_metrics["confusion_matrix"],
+            },
+            "ci": formatted_ci,
+        }
 
-    accepted_targets = test_targets[accepted_mask]
-    accepted_probs = test_probs_calib[accepted_mask, 1]
-    abstained_targets = test_targets[abstained_mask]
-    abstained_probs = test_probs_calib[abstained_mask, 1]
+    def compute_selective_block(
+        p_cal: np.ndarray,
+        y_true: np.ndarray,
+        t_meta: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        tau_acc = float(t_meta.get("tau_accept", 0.80))
+        tau_l = float(t_meta.get("tau_low_uncertainty", 0.95))
+        c_vals = np.max(p_cal, axis=1)
+        acc_mask = c_vals >= tau_acc
+        abs_mask = ~acc_mask
+        n_tot = len(y_true)
+        acc_cnt = int(np.sum(acc_mask))
+        abs_cnt = int(np.sum(abs_mask))
+        cov = float(acc_cnt / n_tot) if n_tot > 0 else 0.0
 
-    if accepted_count > 0:
-        sel_acc_metrics = compute_binary_metrics(accepted_targets, accepted_probs)
-        accepted_error_rate = 1.0 - sel_acc_metrics["accuracy"]
-    else:
-        sel_acc_metrics = {"accuracy": 0.0, "sensitivity": 0.0, "specificity": 0.0}
-        accepted_error_rate = 0.0
+        if acc_cnt > 0:
+            s_acc = compute_binary_metrics(y_true[acc_mask], p_cal[acc_mask, 1])
+        else:
+            s_acc = {"accuracy": 0.0, "sensitivity": 0.0, "specificity": 0.0}
 
-    if abstained_count > 0:
-        sel_abs_metrics = compute_binary_metrics(abstained_targets, abstained_probs)
-        abstained_error_rate = 1.0 - sel_abs_metrics["accuracy"]
-    else:
-        sel_abs_metrics = {"accuracy": 0.0}
-        abstained_error_rate = 0.0
+        return {
+            "tau_accept": round(tau_acc, 6),
+            "tau_low_uncertainty": round(tau_l, 6),
+            "coverage": round(cov, 4),
+            "accepted_accuracy": round(s_acc["accuracy"], 4),
+            "accepted_sensitivity": round(s_acc["sensitivity"], 4),
+            "accepted_specificity": round(s_acc["specificity"], 4),
+            "abstained_count": abs_cnt,
+            "fallback": bool(t_meta.get("tau_accept_fallback", False)),
+        }
 
-    selective_eval = {
-        "tau_accept": tau_accept,
-        "coverage": round(coverage, 4),
-        "total_test_samples": total_test,
-        "accepted_count": accepted_count,
-        "abstained_count": abstained_count,
-        "accepted_accuracy": round(sel_acc_metrics["accuracy"], 4),
-        "accepted_sensitivity": round(sel_acc_metrics["sensitivity"], 4),
-        "accepted_specificity": round(sel_acc_metrics["specificity"], 4),
-        "accepted_error_rate": round(accepted_error_rate, 4),
-        "abstained_error_rate": round(abstained_error_rate, 4),
-    }
+    # Selective blocks
+    selective_test = compute_selective_block(test_probs_calib, test_targets, thresh_meta)
+    selective_val = compute_selective_block(val_probs_calib, val_targets, thresh_meta)
 
     # Error analysis: False Negatives and False Positives on test
+    tau_acc_test = selective_test["tau_accept"]
+    test_confs = np.max(test_probs_calib, axis=1)
+    abstained_mask = test_confs < tau_acc_test
     test_preds_calib = (test_probs_calib[:, 1] >= 0.5).astype(int)
     fn_indices = np.where((test_preds_calib == 0) & (test_targets == 1))[0].tolist()
     fp_indices = np.where((test_preds_calib == 1) & (test_targets == 0))[0].tolist()
@@ -355,55 +397,78 @@ def evaluate_full(
     }
 
     # Load optional quality & OOD eval reports if they exist
-    quality_eval = None
+    quality_eval = {}
     quality_eval_file = REPORTS_DIR / "quality_eval.json"
     if quality_eval_file.exists():
         with open(quality_eval_file, "r", encoding="utf-8") as f:
             quality_eval = json.load(f)
 
-    ood_eval = None
+    ood_eval = {}
     ood_eval_file = REPORTS_DIR / "ood_eval.json"
     if ood_eval_file.exists():
         with open(ood_eval_file, "r", encoding="utf-8") as f:
             ood_eval = json.load(f)
 
     report_json = {
+        "schema_version": "1.0",
         "provenance": {
             "model_version": ckpt_meta.get("full_model_version", "unknown"),
             "checkpoint_sha256": ckpt_meta.get("sha256", "unknown"),
-            "evaluated_utc": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "seed": SEED,
             "device": str(device),
             "split_sizes": ds_meta["split_sizes"],
         },
         "dataset": {
             "name": ds_meta["dataset_name"],
-            "class_counts": ds_meta["class_counts"],
-            "exact_duplicates": ds_meta["exact_duplicates"],
-            "image_size": [224, 224],
+            "image_size": 224,
+            "class_names": ["normal", "pneumonia"],
+            "class_counts": {
+                "train": {
+                    "normal": ds_meta["class_counts"]["train"]["normal (0)"],
+                    "pneumonia": ds_meta["class_counts"]["train"]["pneumonia (1)"],
+                },
+                "val": {
+                    "normal": ds_meta["class_counts"]["val"]["normal (0)"],
+                    "pneumonia": ds_meta["class_counts"]["val"]["pneumonia (1)"],
+                },
+                "test": {
+                    "normal": ds_meta["class_counts"]["test"]["normal (0)"],
+                    "pneumonia": ds_meta["class_counts"]["test"]["pneumonia (1)"],
+                },
+            },
+            "duplicate_overlap": ds_meta.get("exact_duplicates", {}),
         },
         "metrics": {
             "test": {
-                "uncalibrated": {**test_raw_metrics, **test_calib_err_raw},
-                "calibrated": {**test_calib_metrics, **test_calib_err_cal, "bootstrap_95ci": test_boot_cis},
+                "uncalibrated": format_metrics_block(test_raw_metrics, test_calib_err_raw, test_boot_cis, len(test_targets)),
+                "calibrated": format_metrics_block(test_calib_metrics, test_calib_err_cal, test_boot_cis, len(test_targets)),
             },
             "val": {
-                "uncalibrated": {**val_raw_metrics, **val_calib_err_raw},
-                "calibrated": {**val_calib_metrics, **val_calib_err_cal},
+                "uncalibrated": format_metrics_block(val_raw_metrics, val_calib_err_raw, val_boot_cis, len(val_targets)),
+                "calibrated": format_metrics_block(val_calib_metrics, val_calib_err_cal, val_boot_cis, len(val_targets)),
             },
         },
         "calibration": {
+            "method": "temperature_scaling",
             "temperature": round(temperature, 4),
-            "method": "Temperature Scaling (Validation NLL Minimization)",
-            "val_ece_before": val_calib_err_raw["ece"],
-            "val_ece_after": val_calib_err_cal["ece"],
-            "test_ece_before": test_calib_err_raw["ece"],
-            "test_ece_after": test_calib_err_cal["ece"],
+            "fitted_on": "val",
+            "val": {
+                "ece_before": round(val_calib_err_raw["ece"], 4),
+                "ece_after": round(val_calib_err_cal["ece"], 4),
+            },
+            "test": {
+                "ece_before": round(test_calib_err_raw["ece"], 4),
+                "ece_after": round(test_calib_err_cal["ece"], 4),
+            },
         },
-        "selective": selective_eval,
-        "error_analysis": error_analysis,
+        "selective": {
+            "test": selective_test,
+            "val": selective_val,
+        },
         "quality_eval": quality_eval,
         "ood_eval": ood_eval,
+        "error_analysis": error_analysis,
         "limitations": STANDARD_LIMITATIONS,
     }
 
@@ -425,18 +490,19 @@ def generate_markdown_report(report: Dict, out_path: Path) -> None:
     prov = report["provenance"]
     t_cal = report["metrics"]["test"]["calibrated"]
     v_cal = report["metrics"]["val"]["calibrated"]
-    sel = report["selective"]
+    sel = report["selective"]["test"]
     cal = report["calibration"]
     err = report["error_analysis"]
 
-    ci = t_cal.get("bootstrap_95ci", {})
+    ci = t_cal.get("ci", {})
 
     md = f"""# MedGuard AI — Model Validation Report
 
+**Schema Version:** `{report.get('schema_version', '1.0')}`  
 **Model Version:** `{prov['model_version']}`  
-**Evaluated UTC:** `{prov['evaluated_utc']}`  
+**Generated At:** `{prov.get('generated_at', '')}`  
 **Hardware Device:** `{prov['device']}`  
-**Dataset:** PneumoniaMNIST+ 224x224 (Pediatric Chest X-Ray Benchmark)
+**Dataset:** {report['dataset']['name']} ({report['dataset']['image_size']}x{report['dataset']['image_size']})
 
 ---
 
@@ -446,10 +512,10 @@ Primary evaluation on official **Test split** (N = {prov['split_sizes']['test']}
 
 | Metric | Test Value (Calibrated) | 95% Bootstrap CI | Validation Value |
 |---|---|---|---|
-| **AUROC** | **{t_cal['auroc']:.4f}** | [{ci.get('auroc', {}).get('ci_lower', 0):.4f}, {ci.get('auroc', {}).get('ci_upper', 0):.4f}] | {v_cal['auroc']:.4f} |
-| **Accuracy** | **{t_cal['accuracy']:.4f}** | [{ci.get('accuracy', {}).get('ci_lower', 0):.4f}, {ci.get('accuracy', {}).get('ci_upper', 0):.4f}] | {v_cal['accuracy']:.4f} |
-| **Sensitivity (Recall)** | **{t_cal['sensitivity']:.4f}** | [{ci.get('sensitivity', {}).get('ci_lower', 0):.4f}, {ci.get('sensitivity', {}).get('ci_upper', 0):.4f}] | {v_cal['sensitivity']:.4f} |
-| **Specificity** | **{t_cal['specificity']:.4f}** | [{ci.get('specificity', {}).get('ci_lower', 0):.4f}, {ci.get('specificity', {}).get('ci_upper', 0):.4f}] | {v_cal['specificity']:.4f} |
+| **AUROC** | **{t_cal['auroc']:.4f}** | [{ci.get('auroc', [0, 0])[0]:.4f}, {ci.get('auroc', [0, 0])[1]:.4f}] | {v_cal['auroc']:.4f} |
+| **Accuracy** | **{t_cal['accuracy']:.4f}** | [{ci.get('accuracy', [0, 0])[0]:.4f}, {ci.get('accuracy', [0, 0])[1]:.4f}] | {v_cal['accuracy']:.4f} |
+| **Sensitivity (Recall)** | **{t_cal['sensitivity']:.4f}** | [{ci.get('sensitivity', [0, 0])[0]:.4f}, {ci.get('sensitivity', [0, 0])[1]:.4f}] | {v_cal['sensitivity']:.4f} |
+| **Specificity** | **{t_cal['specificity']:.4f}** | [{ci.get('specificity', [0, 0])[0]:.4f}, {ci.get('specificity', [0, 0])[1]:.4f}] | {v_cal['specificity']:.4f} |
 | **Precision** | **{t_cal['precision']:.4f}** | - | {v_cal['precision']:.4f} |
 | **F1 Score** | **{t_cal['f1']:.4f}** | - | {v_cal['f1']:.4f} |
 | **False-Negative Rate** | **{t_cal['false_negative_rate']:.4f}** | - | {v_cal['false_negative_rate']:.4f} |
@@ -457,8 +523,8 @@ Primary evaluation on official **Test split** (N = {prov['split_sizes']['test']}
 ### Confusion Matrix (Test Split)
 ```
                 Predicted Normal    Predicted Pneumonia
-Actual Normal        {t_cal['confusion_matrix'][0][0]:<19} {t_cal['confusion_matrix'][0][1]}
-Actual Pneumonia     {t_cal['confusion_matrix'][1][0]:<19} {t_cal['confusion_matrix'][1][1]}
+Actual Normal        {t_cal['confusion_matrix']['matrix'][0][0]:<19} {t_cal['confusion_matrix']['matrix'][0][1]}
+Actual Pneumonia     {t_cal['confusion_matrix']['matrix'][1][0]:<19} {t_cal['confusion_matrix']['matrix'][1][1]}
 ```
 
 ---
@@ -467,9 +533,9 @@ Actual Pneumonia     {t_cal['confusion_matrix'][1][0]:<19} {t_cal['confusion_mat
 
 Fitted on **Validation Split** (N = {prov['split_sizes']['val']}):
 - **Learned Temperature $T$:** `{cal['temperature']:.4f}`
-- **Validation ECE:** `{cal['val_ece_before']:.4f}` $\\to$ `{cal['val_ece_after']:.4f}`
-- **Test ECE:** `{cal['test_ece_before']:.4f}` $\\to$ `{cal['test_ece_after']:.4f}`
-- **Test Brier Score:** `{t_cal['brier_score']:.4f}` | **Test NLL:** `{t_cal['nll']:.4f}`
+- **Validation ECE:** `{cal['val']['ece_before']:.4f}` $\\to$ `{cal['val']['ece_after']:.4f}`
+- **Test ECE:** `{cal['test']['ece_before']:.4f}` $\\to$ `{cal['test']['ece_after']:.4f}`
+- **Test Brier Score:** `{t_cal['brier']:.4f}` | **Test NLL:** `{t_cal['nll']:.4f}`
 
 ---
 
@@ -477,11 +543,10 @@ Fitted on **Validation Split** (N = {prov['split_sizes']['val']}):
 
 Threshold $\\tau_{{\\text{{accept}}}}$ fitted on validation set: **{sel['tau_accept']:.4f}**
 
-- **Coverage on Test Set:** **{sel['coverage'] * 100:.1f}%** ({sel['accepted_count']} / {sel['total_test_samples']})
+- **Coverage on Test Set:** **{sel['coverage'] * 100:.1f}%**
 - **Abstained (Uncertain):** **{sel['abstained_count']}** samples
-- **Accuracy on Accepted Samples:** **{sel['accepted_accuracy']:.4f}** (Error rate: {sel['accepted_error_rate']:.4f})
-- **Error Rate among Abstained Samples:** **{sel['abstained_error_rate']:.4f}**
-- **False Negatives Caught by Abstention:** {err['test_fn_abstained']} out of {err['test_total_fn']} total FNs
+- **Accuracy on Accepted Samples:** **{sel['accepted_accuracy']:.4f}**
+- **False Negatives Caught by Abstention:** {err.get('test_fn_abstained', 0)} out of {err.get('test_total_fn', 0)} total FNs
 
 ---
 
