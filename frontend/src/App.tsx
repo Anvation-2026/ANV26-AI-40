@@ -10,7 +10,12 @@ import { About } from './pages/About';
 export const App: React.FC = () => {
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />

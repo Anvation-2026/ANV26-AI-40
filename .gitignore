@@ -55,3 +55,4 @@ Thumbs.db
 
 # Local ML datasets
 ml/data/
+ml/outputs/heatmaps/
