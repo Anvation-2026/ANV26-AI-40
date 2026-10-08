@@ -20,10 +20,17 @@ Write-Host ""
 # 1. Environment Verification
 Write-Host "[1/5] Checking runtime environments..." -ForegroundColor Yellow
 
-# Check Python
+# Locate Python runtime (prioritize .venv-ml where CUDA and backend are installed)
+$PythonExe = "python"
+if (Test-Path "$RepoRoot\.venv-ml\Scripts\python.exe") {
+    $PythonExe = "$RepoRoot\.venv-ml\Scripts\python.exe"
+} elseif (Test-Path "$RepoRoot\.venv\Scripts\python.exe") {
+    $PythonExe = "$RepoRoot\.venv\Scripts\python.exe"
+}
+
 try {
-    $pythonVersion = & python --version 2>&1
-    Write-Host "  -> Python detected: $pythonVersion" -ForegroundColor Green
+    $pythonVersion = & $PythonExe --version 2>&1
+    Write-Host "  -> Python runtime: $pythonVersion ($PythonExe)" -ForegroundColor Green
 } catch {
     Write-Host "  [ERROR] Python is not installed or not in PATH." -ForegroundColor Red
     exit 1
@@ -74,7 +81,7 @@ Write-Host "  -> Port 5173 (Frontend) ready." -ForegroundColor Green
 Write-Host ""
 Write-Host "[3/5] Starting FastAPI Backend on http://127.0.0.1:8000..." -ForegroundColor Yellow
 
-$backendProcess = Start-Process -FilePath "python" `
+$backendProcess = Start-Process -FilePath $PythonExe `
     -ArgumentList "-m", "uvicorn", "backend.main:app", "--host", "127.0.0.1", "--port", "8000" `
     -WorkingDirectory $RepoRoot `
     -PassThru

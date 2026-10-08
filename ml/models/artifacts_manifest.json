@@ -1,22 +1,26 @@
 {
-  "model_version": "resnet18-pneumoniamnist224-v1+d31a57c4",
-  "updated_utc": "2026-10-08T12:15:59.287121+00:00",
+  "model_version": "resnet18-pneumoniamnist224-v1+a0d43e72",
+  "updated_utc": "2026-10-08T12:26:22.134226+00:00",
   "artifacts": {
     "best_model.prev.pth": {
       "sha256": "2c4f0760c092ccd9685dbe77f662d893e8a30ca276f13306224ebb7eda06fc8f",
       "size_bytes": 45385172
     },
     "best_model.pth": {
-      "sha256": "d31a57c479461cbc25a6ca88f0c0cc9160ef830bc81bc87bf08b46cc95f6e45b",
+      "sha256": "a0d43e72580bdafed01cf3682998a109ebb016c17208326e6507893bab6dcc1b",
       "size_bytes": 45386900
     },
     "calibration.json": {
       "sha256": "d4c76e7aa947d8ffe4c786f2b4ea486b4789aad1015f218b50708a4472dfe455",
       "size_bytes": 292
     },
+    "densenet201_chestmnist.pth": {
+      "sha256": "d81afb0d07c6cde084bd7b5cfb3a15d552ff9d53c61e5fefc4251d3e97c42dbf",
+      "size_bytes": 73864627
+    },
     "model_card.json": {
-      "sha256": "657734de78f438afb3bb9078f0a1f3dfcdf8f312d27c723b268ff2ada26e0e87",
-      "size_bytes": 4150
+      "sha256": "4472b9a0c5936bd87f47125b0b51f30c7fc16ef330b6b5130685831e96f3c8cb",
+      "size_bytes": 4155
     },
     "ood_stats.npz": {
       "sha256": "d6c5ad8ec83389232175aef7b29c972ed37f079c8d8adf56777cbbcbdaf58624",

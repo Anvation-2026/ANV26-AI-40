@@ -1,10 +1,10 @@
 {
   "model_name": "MedGuard AI RESNET18_MLP Chest X-Ray Classifier",
-  "model_version": "resnet18-pneumoniamnist224-v1+d31a57c4",
+  "model_version": "resnet18-pneumoniamnist224-v1+a0d43e72",
   "base_model": "torchvision.models.resnet18",
   "task": "Binary Classification (Normal vs Pneumonia)",
   "intended_use": "Educational decision-support research prototype. Not for clinical diagnosis.",
-  "created_utc": "2026-10-08T12:15:59.041990+00:00",
+  "created_utc": "2026-10-08T12:26:21.817965+00:00",
   "architecture": {
     "backbone": "ResNet-18",
     "feature_dim": 512,
@@ -31,13 +31,13 @@
   },
   "training": {
     "config": {
-      "epochs": 1,
-      "actual_epochs_trained": 1,
-      "batch_size": 32,
+      "epochs": 15,
+      "actual_epochs_trained": 10,
+      "batch_size": 64,
       "lr": 0.0001,
       "weight_decay": 0.0001,
       "seed": 42,
-      "smoke": true,
+      "smoke": false,
       "device": "cuda",
       "gpu_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
       "cuda_version": "12.8",
@@ -48,13 +48,13 @@
         0.3474527895450592
       ],
       "arch": "resnet18_mlp",
-      "training_time_sec": 1.82
+      "training_time_sec": 174.89
     },
-    "best_epoch": 1,
+    "best_epoch": 5,
     "best_val_metric": {
       "name": "val_auroc",
-      "value": 0.9614,
-      "val_loss": 0.3465
+      "value": 0.9987,
+      "val_loss": 0.0262
     }
   },
   "dataset": {

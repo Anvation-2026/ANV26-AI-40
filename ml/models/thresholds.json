@@ -1,17 +1,20 @@
 {
-  "tau_accept": 0.506282,
-  "tau_low_uncertainty": 0.561398,
+  "tau_accept": 0.570457,
+  "tau_low_uncertainty": 0.670969,
   "decision_threshold": 0.5,
   "tau_accept_target_acc": 0.95,
   "tau_accept_min_coverage": 0.6,
-  "tau_accept_val_acc_achieved": 0.9752,
+  "tau_accept_val_acc_achieved": 0.9733,
   "tau_accept_val_coverage_achieved": 1.0,
   "tau_accept_fallback": false,
   "tau_low_target_acc": 0.98,
   "tau_low_min_coverage": 0.3,
-  "tau_low_val_acc_achieved": 0.9808,
-  "tau_low_val_coverage_achieved": 0.9943,
+  "tau_low_val_acc_achieved": 0.9807,
+  "tau_low_val_coverage_achieved": 0.9905,
   "tau_low_fallback": false,
   "fitted_on": "val",
-  "note": "decision_threshold=0.5 is a default, not clinically tuned."
+  "note": "decision_threshold=0.5 is a default, not clinically tuned.",
+  "ood": {
+    "rejection_precedence": "quality_gate_before_feature_ood"
+  }
 }

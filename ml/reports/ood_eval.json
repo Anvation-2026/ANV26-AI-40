@@ -1,8 +1,8 @@
 {
-  "ood_threshold": 28.5505,
+  "ood_threshold": 24.1522,
   "in_distribution": {
-    "val_false_ood_rate": 0.0,
-    "test_false_ood_rate": 0.005
+    "val_false_ood_rate": 0.01,
+    "test_false_ood_rate": 0.015
   },
   "proxy_ood_sets": {
     "random_noise_and_blank": {
@@ -27,7 +27,7 @@
   "proxy_sets_not_used_for_threshold_fitting": true,
   "precedence_experiment": {
     "order_a_quality_then_ood_correct_rate": 0.98,
-    "order_b_ood_then_quality_correct_rate": 0.57,
+    "order_b_ood_then_quality_correct_rate": 0.53,
     "chosen_ordering": "quality_gate_before_feature_ood",
     "n_samples": 100,
     "note": "Ordering A (Quality then OOD) correctly attributes blur/darkness to image quality rather than misclassifying degraded chest radiographs as non-medical OOD."
