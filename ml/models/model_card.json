@@ -1,0 +1,176 @@
+{
+  "model_name": "MedGuard AI ResNet-18 Chest X-Ray Classifier",
+  "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
+  "base_model": "torchvision.models.resnet18",
+  "task": "Binary Classification (Normal vs Pneumonia)",
+  "intended_use": "Educational decision-support research prototype. Not for clinical diagnosis.",
+  "created_utc": "2026-10-08T05:36:16.382967+00:00",
+  "architecture": {
+    "backbone": "ResNet-18",
+    "feature_dim": 512,
+    "classifier": "Linear(512, 2)"
+  },
+  "input": {
+    "format": "Grayscale chest X-ray replicated to 3 channels",
+    "size": [
+      224,
+      224
+    ],
+    "normalization": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    }
+  },
+  "training": {
+    "config": {
+      "epochs": 15,
+      "actual_epochs_trained": 11,
+      "batch_size": 64,
+      "lr": 0.0001,
+      "weight_decay": 0.0001,
+      "seed": 42,
+      "smoke": false,
+      "device": "cuda",
+      "gpu_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "cuda_version": "12.1",
+      "optimizer": "AdamW",
+      "scheduler": "CosineAnnealingLR",
+      "class_weights": [
+        1.93904447555542,
+        0.6737263798713684
+      ],
+      "training_time_sec": 190.33
+    },
+    "best_epoch": 6,
+    "best_val_metric": {
+      "name": "val_auroc",
+      "value": 0.999,
+      "val_loss": 0.0521
+    }
+  },
+  "dataset": {
+    "dataset_name": "PneumoniaMNIST+ (224x224)",
+    "file_path": "D:\\anvation\\ml\\data\\pneumoniamnist_224.npz",
+    "file_sha256": "2a6faaca43872b4bcf4154a79625631ab29683b41e265ab7936d0513351fe591",
+    "file_size_mb": 204.45,
+    "keys": {
+      "train_images": {
+        "shape": [
+          4708,
+          224,
+          224
+        ],
+        "dtype": "uint8",
+        "min": 0,
+        "max": 255
+      },
+      "train_labels": {
+        "shape": [
+          4708,
+          1
+        ],
+        "dtype": "uint8",
+        "unique_values": [
+          0,
+          1
+        ]
+      },
+      "val_images": {
+        "shape": [
+          524,
+          224,
+          224
+        ],
+        "dtype": "uint8",
+        "min": 0,
+        "max": 255
+      },
+      "val_labels": {
+        "shape": [
+          524,
+          1
+        ],
+        "dtype": "uint8",
+        "unique_values": [
+          0,
+          1
+        ]
+      },
+      "test_images": {
+        "shape": [
+          624,
+          224,
+          224
+        ],
+        "dtype": "uint8",
+        "min": 0,
+        "max": 255
+      },
+      "test_labels": {
+        "shape": [
+          624,
+          1
+        ],
+        "dtype": "uint8",
+        "unique_values": [
+          0,
+          1
+        ]
+      }
+    },
+    "split_sizes": {
+      "train": 4708,
+      "val": 524,
+      "test": 624
+    },
+    "expected_sizes": {
+      "train": 4708,
+      "val": 524,
+      "test": 624
+    },
+    "split_sizes_match_expected": true,
+    "class_counts": {
+      "train": {
+        "normal (0)": 1214,
+        "pneumonia (1)": 3494
+      },
+      "val": {
+        "normal (0)": 135,
+        "pneumonia (1)": 389
+      },
+      "test": {
+        "normal (0)": 234,
+        "pneumonia (1)": 390
+      }
+    },
+    "label_mapping": {
+      "0": "normal",
+      "1": "pneumonia"
+    },
+    "positive_class": "pneumonia",
+    "exact_duplicates": {
+      "within_split": {
+        "train": 18,
+        "val": 0,
+        "test": 3
+      },
+      "train_val_overlap": 8,
+      "train_test_overlap": 0,
+      "val_test_overlap": 0
+    },
+    "notes": "Grayscale uint8 pediatric chest X-rays. Official benchmark."
+  },
+  "limitations": [
+    "Trained exclusively on pediatric chest X-rays (PneumoniaMNIST).",
+    "Not validated for adult populations or cross-scanner domain shifts.",
+    "Educational research prototype only; no clinical decision claims."
+  ]
+}

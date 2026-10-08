@@ -1,0 +1,330 @@
+{
+  "provenance": {
+    "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
+    "checkpoint_sha256": "9bda2caa25047bbebaf699e2342ff8c46fedd1ad1884d6c3fab39dcb928ffdd1",
+    "evaluated_utc": "2026-10-08T05:47:27.827171+00:00",
+    "seed": 42,
+    "device": "cuda",
+    "split_sizes": {
+      "train": 4708,
+      "val": 524,
+      "test": 624
+    }
+  },
+  "dataset": {
+    "name": "PneumoniaMNIST+ (224x224)",
+    "class_counts": {
+      "train": {
+        "normal (0)": 1214,
+        "pneumonia (1)": 3494
+      },
+      "val": {
+        "normal (0)": 135,
+        "pneumonia (1)": 389
+      },
+      "test": {
+        "normal (0)": 234,
+        "pneumonia (1)": 390
+      }
+    },
+    "exact_duplicates": {
+      "within_split": {
+        "train": 18,
+        "val": 0,
+        "test": 3
+      },
+      "train_val_overlap": 8,
+      "train_test_overlap": 0,
+      "val_test_overlap": 0
+    },
+    "image_size": [
+      224,
+      224
+    ]
+  },
+  "metrics": {
+    "test": {
+      "uncalibrated": {
+        "confusion_matrix": [
+          [
+            210,
+            24
+          ],
+          [
+            4,
+            386
+          ]
+        ],
+        "confusion_labels": [
+          [
+            "TN",
+            "FP"
+          ],
+          [
+            "FN",
+            "TP"
+          ]
+        ],
+        "accuracy": 0.9551,
+        "precision": 0.9415,
+        "sensitivity": 0.9897,
+        "recall": 0.9897,
+        "specificity": 0.8974,
+        "f1": 0.965,
+        "auroc": 0.9929,
+        "false_negative_rate": 0.0103,
+        "false_positive_rate": 0.1026,
+        "counts": {
+          "tp": 386,
+          "fp": 24,
+          "tn": 210,
+          "fn": 4,
+          "total": 624
+        },
+        "ece": 0.0349,
+        "brier_score": 0.0377,
+        "nll": 0.1784
+      },
+      "calibrated": {
+        "confusion_matrix": [
+          [
+            210,
+            24
+          ],
+          [
+            4,
+            386
+          ]
+        ],
+        "confusion_labels": [
+          [
+            "TN",
+            "FP"
+          ],
+          [
+            "FN",
+            "TP"
+          ]
+        ],
+        "accuracy": 0.9551,
+        "precision": 0.9415,
+        "sensitivity": 0.9897,
+        "recall": 0.9897,
+        "specificity": 0.8974,
+        "f1": 0.965,
+        "auroc": 0.9929,
+        "false_negative_rate": 0.0103,
+        "false_positive_rate": 0.1026,
+        "counts": {
+          "tp": 386,
+          "fp": 24,
+          "tn": 210,
+          "fn": 4,
+          "total": 624
+        },
+        "ece": 0.0278,
+        "brier_score": 0.0351,
+        "nll": 0.1325,
+        "bootstrap_95ci": {
+          "accuracy": {
+            "ci_lower": 0.9375,
+            "ci_upper": 0.9712
+          },
+          "sensitivity": {
+            "ci_lower": 0.9791,
+            "ci_upper": 1.0
+          },
+          "specificity": {
+            "ci_lower": 0.8583,
+            "ci_upper": 0.9342
+          },
+          "auroc": {
+            "ci_lower": 0.988,
+            "ci_upper": 0.9968
+          }
+        }
+      }
+    },
+    "val": {
+      "uncalibrated": {
+        "confusion_matrix": [
+          [
+            133,
+            2
+          ],
+          [
+            9,
+            380
+          ]
+        ],
+        "confusion_labels": [
+          [
+            "TN",
+            "FP"
+          ],
+          [
+            "FN",
+            "TP"
+          ]
+        ],
+        "accuracy": 0.979,
+        "precision": 0.9948,
+        "sensitivity": 0.9769,
+        "recall": 0.9769,
+        "specificity": 0.9852,
+        "f1": 0.9857,
+        "auroc": 0.999,
+        "false_negative_rate": 0.0231,
+        "false_positive_rate": 0.0148,
+        "counts": {
+          "tp": 380,
+          "fp": 2,
+          "tn": 133,
+          "fn": 9,
+          "total": 524
+        },
+        "ece": 0.0134,
+        "brier_score": 0.0154,
+        "nll": 0.0612
+      },
+      "calibrated": {
+        "confusion_matrix": [
+          [
+            133,
+            2
+          ],
+          [
+            9,
+            380
+          ]
+        ],
+        "confusion_labels": [
+          [
+            "TN",
+            "FP"
+          ],
+          [
+            "FN",
+            "TP"
+          ]
+        ],
+        "accuracy": 0.979,
+        "precision": 0.9948,
+        "sensitivity": 0.9769,
+        "recall": 0.9769,
+        "specificity": 0.9852,
+        "f1": 0.9857,
+        "auroc": 0.999,
+        "false_negative_rate": 0.0231,
+        "false_positive_rate": 0.0148,
+        "counts": {
+          "tp": 380,
+          "fp": 2,
+          "tn": 133,
+          "fn": 9,
+          "total": 524
+        },
+        "ece": 0.0118,
+        "brier_score": 0.0151,
+        "nll": 0.053
+      }
+    }
+  },
+  "calibration": {
+    "temperature": 1.5773,
+    "method": "Temperature Scaling (Validation NLL Minimization)",
+    "val_ece_before": 0.0134,
+    "val_ece_after": 0.0118,
+    "test_ece_before": 0.0349,
+    "test_ece_after": 0.0278
+  },
+  "selective": {
+    "tau_accept": 0.561777,
+    "coverage": 0.9856,
+    "total_test_samples": 624,
+    "accepted_count": 615,
+    "abstained_count": 9,
+    "accepted_accuracy": 0.9577,
+    "accepted_sensitivity": 0.9897,
+    "accepted_specificity": 0.9027,
+    "accepted_error_rate": 0.0423,
+    "abstained_error_rate": 0.2222
+  },
+  "error_analysis": {
+    "test_total_fn": 4,
+    "test_fn_abstained": 0,
+    "test_fn_accepted": 4,
+    "test_total_fp": 24,
+    "test_fp_abstained": 2,
+    "test_fp_accepted": 22,
+    "fn_sample_indices": [
+      88,
+      571,
+      598,
+      604
+    ]
+  },
+  "quality_eval": {
+    "val_false_rejection_rate": 0.01,
+    "test_false_rejection_rate": 0.015,
+    "synthetic_degradation_detection_rates": {
+      "gaussian_blur_sigma3": 1.0,
+      "gaussian_blur_sigma8": 1.0,
+      "gaussian_blur_sigma15": 1.0,
+      "darkening_gamma0.2": 0.995,
+      "darkening_scale0.1": 1.0,
+      "overexposure_scale3": 1.0,
+      "gaussian_noise_sigma25": 1.0,
+      "gaussian_noise_sigma50": 1.0,
+      "contrast_squash": 0.98,
+      "jpeg_quality5": 0.01
+    },
+    "note": "Degraded samples are synthetic; labeled as such. Mild degradations may legitimately pass."
+  },
+  "ood_eval": {
+    "ood_threshold": 31.99,
+    "in_distribution": {
+      "val_false_ood_rate": 0.015,
+      "test_false_ood_rate": 0.03
+    },
+    "proxy_ood_sets": {
+      "random_noise_and_blank": {
+        "n": 250,
+        "detection_rate": 1.0,
+        "auroc_vs_val": 1.0,
+        "note": "Easy OOD \u2014 high entropy noise and blank frames"
+      },
+      "synthetic_natural_patterns": {
+        "n": 200,
+        "detection_rate": 1.0,
+        "auroc_vs_val": 1.0,
+        "note": "Geometric, periodic, and gradient non-medical patterns"
+      },
+      "external_cifar10_and_medmnist": {
+        "n": 0,
+        "detection_rate": null,
+        "note": "External CIFAR-10 download skipped to avoid slow network timeout; synthetic proxy sets evaluated instead."
+      }
+    },
+    "note_near_ood": "Near-OOD inputs (adult chest X-rays, other body parts, different scanners) may NOT be reliably detected. OOD rejection is not guaranteed.",
+    "proxy_sets_not_used_for_threshold_fitting": true,
+    "precedence_experiment": {
+      "order_a_quality_then_ood_correct_rate": 1.0,
+      "order_b_ood_then_quality_correct_rate": 0.69,
+      "chosen_ordering": "quality_gate_before_feature_ood",
+      "n_samples": 100,
+      "note": "Ordering A (Quality then OOD) correctly attributes blur/darkness to image quality rather than misclassifying degraded chest radiographs as non-medical OOD."
+    }
+  },
+  "limitations": [
+    "Educational research prototype; not a medical device and not a clinical diagnosis.",
+    "Trained and evaluated on PneumoniaMNIST (pediatric chest X-rays, downsampled public benchmark); performance on adults, other hospitals, scanners, or populations is unknown.",
+    "Calibrated probabilities reflect average reliability on validation data, not a guarantee that any individual prediction is correct.",
+    "Grad-CAM heatmaps show where the model's output was sensitive; they do not confirm a medical finding.",
+    "Image-quality and out-of-distribution checks are heuristic; some unsuitable or unsupported images may pass, and some valid images may be rejected.",
+    "The system cannot guarantee zero false negatives.",
+    "No demographic metadata is available, so subgroup fairness could not be evaluated.",
+    "Validation and test splits may differ in distribution; reported test performance is the unbiased estimate.",
+    "Quality-degradation tests use synthetic degradations created for this project."
+  ]
+}

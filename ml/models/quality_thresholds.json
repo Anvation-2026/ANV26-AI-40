@@ -1,0 +1,45 @@
+{
+  "thresholds": {
+    "blur_min": 13.5279,
+    "brightness_min": 0.3383,
+    "brightness_max": 0.7582,
+    "contrast_min": 0.2784,
+    "noise_max": 1.4826
+  },
+  "percentiles_used": {
+    "blur_min_pct": 1.0,
+    "brightness_min_pct": 0.5,
+    "brightness_max_pct": 99.5,
+    "contrast_min_pct": 1.0,
+    "noise_max_pct": 99.5
+  },
+  "clean_image_stats": {
+    "blur": {
+      "mean": 96.2162814158225,
+      "std": 65.08134965421993,
+      "p1": 13.527859464357018,
+      "p99": 298.29610828206995
+    },
+    "brightness": {
+      "mean": 0.5713849256971519,
+      "std": 0.07833203693994459,
+      "p0.5": 0.33831895805197076,
+      "p99.5": 0.7582173228666467
+    },
+    "contrast": {
+      "mean": 0.6142629069976615,
+      "std": 0.14961747451678203,
+      "p1": 0.2784313725490196,
+      "p99": 0.9254901960784314
+    },
+    "noise": {
+      "mean": 0.6258175157495754,
+      "std": 0.7321692057490229,
+      "p0.5": 0.0,
+      "p99.5": 1.4825796886582654
+    }
+  },
+  "val_false_rejection_rate": 0.021,
+  "n_train": 4708,
+  "n_val": 524
+}

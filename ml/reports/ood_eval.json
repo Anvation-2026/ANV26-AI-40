@@ -1,0 +1,35 @@
+{
+  "ood_threshold": 31.99,
+  "in_distribution": {
+    "val_false_ood_rate": 0.015,
+    "test_false_ood_rate": 0.03
+  },
+  "proxy_ood_sets": {
+    "random_noise_and_blank": {
+      "n": 250,
+      "detection_rate": 1.0,
+      "auroc_vs_val": 1.0,
+      "note": "Easy OOD \u2014 high entropy noise and blank frames"
+    },
+    "synthetic_natural_patterns": {
+      "n": 200,
+      "detection_rate": 1.0,
+      "auroc_vs_val": 1.0,
+      "note": "Geometric, periodic, and gradient non-medical patterns"
+    },
+    "external_cifar10_and_medmnist": {
+      "n": 0,
+      "detection_rate": null,
+      "note": "External CIFAR-10 download skipped to avoid slow network timeout; synthetic proxy sets evaluated instead."
+    }
+  },
+  "note_near_ood": "Near-OOD inputs (adult chest X-rays, other body parts, different scanners) may NOT be reliably detected. OOD rejection is not guaranteed.",
+  "proxy_sets_not_used_for_threshold_fitting": true,
+  "precedence_experiment": {
+    "order_a_quality_then_ood_correct_rate": 1.0,
+    "order_b_ood_then_quality_correct_rate": 0.69,
+    "chosen_ordering": "quality_gate_before_feature_ood",
+    "n_samples": 100,
+    "note": "Ordering A (Quality then OOD) correctly attributes blur/darkness to image quality rather than misclassifying degraded chest radiographs as non-medical OOD."
+  }
+}

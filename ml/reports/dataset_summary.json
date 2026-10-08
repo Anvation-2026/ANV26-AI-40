@@ -1,0 +1,112 @@
+{
+  "dataset_name": "PneumoniaMNIST+ (224x224)",
+  "file_path": "D:\\anvation\\ml\\data\\pneumoniamnist_224.npz",
+  "file_sha256": "2a6faaca43872b4bcf4154a79625631ab29683b41e265ab7936d0513351fe591",
+  "file_size_mb": 204.45,
+  "keys": {
+    "train_images": {
+      "shape": [
+        4708,
+        224,
+        224
+      ],
+      "dtype": "uint8",
+      "min": 0,
+      "max": 255
+    },
+    "train_labels": {
+      "shape": [
+        4708,
+        1
+      ],
+      "dtype": "uint8",
+      "unique_values": [
+        0,
+        1
+      ]
+    },
+    "val_images": {
+      "shape": [
+        524,
+        224,
+        224
+      ],
+      "dtype": "uint8",
+      "min": 0,
+      "max": 255
+    },
+    "val_labels": {
+      "shape": [
+        524,
+        1
+      ],
+      "dtype": "uint8",
+      "unique_values": [
+        0,
+        1
+      ]
+    },
+    "test_images": {
+      "shape": [
+        624,
+        224,
+        224
+      ],
+      "dtype": "uint8",
+      "min": 0,
+      "max": 255
+    },
+    "test_labels": {
+      "shape": [
+        624,
+        1
+      ],
+      "dtype": "uint8",
+      "unique_values": [
+        0,
+        1
+      ]
+    }
+  },
+  "split_sizes": {
+    "train": 4708,
+    "val": 524,
+    "test": 624
+  },
+  "expected_sizes": {
+    "train": 4708,
+    "val": 524,
+    "test": 624
+  },
+  "split_sizes_match_expected": true,
+  "class_counts": {
+    "train": {
+      "normal (0)": 1214,
+      "pneumonia (1)": 3494
+    },
+    "val": {
+      "normal (0)": 135,
+      "pneumonia (1)": 389
+    },
+    "test": {
+      "normal (0)": 234,
+      "pneumonia (1)": 390
+    }
+  },
+  "label_mapping": {
+    "0": "normal",
+    "1": "pneumonia"
+  },
+  "positive_class": "pneumonia",
+  "exact_duplicates": {
+    "within_split": {
+      "train": 18,
+      "val": 0,
+      "test": 3
+    },
+    "train_val_overlap": 8,
+    "train_test_overlap": 0,
+    "val_test_overlap": 0
+  },
+  "notes": "Grayscale uint8 pediatric chest X-rays. Official benchmark."
+}

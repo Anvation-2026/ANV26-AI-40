@@ -1,0 +1,45 @@
+{
+  "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
+  "checkpoint_sha256": "9bda2caa25047bbebaf699e2342ff8c46fedd1ad1884d6c3fab39dcb928ffdd1",
+  "evaluated_split": "test",
+  "num_samples": 624,
+  "metrics": {
+    "confusion_matrix": [
+      [
+        210,
+        24
+      ],
+      [
+        4,
+        386
+      ]
+    ],
+    "confusion_labels": [
+      [
+        "TN",
+        "FP"
+      ],
+      [
+        "FN",
+        "TP"
+      ]
+    ],
+    "accuracy": 0.9551,
+    "precision": 0.9415,
+    "sensitivity": 0.9897,
+    "recall": 0.9897,
+    "specificity": 0.8974,
+    "f1": 0.965,
+    "auroc": 0.9929,
+    "false_negative_rate": 0.0103,
+    "false_positive_rate": 0.1026,
+    "counts": {
+      "tp": 386,
+      "fp": 24,
+      "tn": 210,
+      "fn": 4,
+      "total": 624
+    }
+  },
+  "evaluated_utc": "2026-10-08T05:40:37.349475+00:00"
+}

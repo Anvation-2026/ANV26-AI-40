@@ -1,0 +1,11 @@
+torch
+torchvision
+numpy
+pillow
+opencv-python-headless
+scikit-learn
+scipy
+matplotlib
+tqdm
+pytest
+medmnist

@@ -1,0 +1,34 @@
+{
+  "model_version": "resnet18-pneumoniamnist224-v1+9bda2caa",
+  "updated_utc": "2026-10-08T05:52:48.705796+00:00",
+  "artifacts": {
+    "best_model.prev.pth": {
+      "sha256": "80379b405f4d027d8610eb9a5a0fbf76e540e8ee9790f543e5a9b536eeba9670",
+      "size_bytes": 44791992
+    },
+    "best_model.pth": {
+      "sha256": "9bda2caa25047bbebaf699e2342ff8c46fedd1ad1884d6c3fab39dcb928ffdd1",
+      "size_bytes": 44791992
+    },
+    "calibration.json": {
+      "sha256": "03a932b85cad5a72c451e7c39352dd0cf99a831ce8af80441b52396ec09576d4",
+      "size_bytes": 292
+    },
+    "model_card.json": {
+      "sha256": "9065ceebe56cfdd0f90c22d2d367e13b442e1db3617bc46bf8d462015411a935",
+      "size_bytes": 4032
+    },
+    "ood_stats.npz": {
+      "sha256": "b9c1f76caa0347b63047c06aaa62a45432008db930c9dbd8a1cde0efbb4e70e9",
+      "size_bytes": 1054256
+    },
+    "quality_thresholds.json": {
+      "sha256": "7f43ecd5a74dda23c140be990d3c4d4c968adf009b0ea245e62f734b67a0915c",
+      "size_bytes": 1091
+    },
+    "thresholds.json": {
+      "sha256": "f50faa5351968e15615caaffce29c728330b2c70a09f1c7921173aad7ae592ed",
+      "size_bytes": 721
+    }
+  }
+}

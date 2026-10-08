@@ -1,0 +1,17 @@
+{
+  "val_false_rejection_rate": 0.01,
+  "test_false_rejection_rate": 0.015,
+  "synthetic_degradation_detection_rates": {
+    "gaussian_blur_sigma3": 1.0,
+    "gaussian_blur_sigma8": 1.0,
+    "gaussian_blur_sigma15": 1.0,
+    "darkening_gamma0.2": 0.995,
+    "darkening_scale0.1": 1.0,
+    "overexposure_scale3": 1.0,
+    "gaussian_noise_sigma25": 1.0,
+    "gaussian_noise_sigma50": 1.0,
+    "contrast_squash": 0.98,
+    "jpeg_quality5": 0.01
+  },
+  "note": "Degraded samples are synthetic; labeled as such. Mild degradations may legitimately pass."
+}
