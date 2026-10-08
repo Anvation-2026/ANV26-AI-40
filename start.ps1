@@ -47,17 +47,28 @@ function Test-PortInUse($port) {
     return [bool](Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue)
 }
 
-if (Test-PortInUse 8000) {
-    Write-Host "  [WARNING] Port 8000 is already in use. Existing processes on this port might conflict." -ForegroundColor Magenta
-} else {
-    Write-Host "  -> Port 8000 (Backend) is available." -ForegroundColor Green
+function Clear-Port($port) {
+    try {
+        $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+        foreach ($conn in $conns) {
+            if ($conn.OwningProcess -and $conn.OwningProcess -gt 0) {
+                Write-Host "  -> Freeing conflicting process on port $port (PID $($conn.OwningProcess))..." -ForegroundColor Yellow
+                Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
+            }
+        }
+        Start-Sleep -Milliseconds 500
+    } catch {}
 }
 
-if (Test-PortInUse 5173) {
-    Write-Host "  [WARNING] Port 5173 is already in use. Vite will attempt port 5174 if not freed." -ForegroundColor Magenta
-} else {
-    Write-Host "  -> Port 5173 (Frontend) is available." -ForegroundColor Green
+if (Test-PortInUse 8000) {
+    Clear-Port 8000
 }
+Write-Host "  -> Port 8000 (Backend) ready." -ForegroundColor Green
+
+if (Test-PortInUse 5173) {
+    Clear-Port 5173
+}
+Write-Host "  -> Port 5173 (Frontend) ready." -ForegroundColor Green
 
 # 3. Start Backend Service
 Write-Host ""

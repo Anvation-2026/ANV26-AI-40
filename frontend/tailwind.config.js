@@ -12,7 +12,7 @@ export default {
         navy: {
           DEFAULT: "#153047",
           foreground: "#102235",
-          muted: "#617286",
+          muted: "#667d97ff",
           light: "#EAEFF4",
         },
         border: "#E3E9EF",
