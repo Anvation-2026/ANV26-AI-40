@@ -1,3 +1,5 @@
+import os
+import tempfile
 from pathlib import Path
 
 # Base Paths (ml directory is root for this module)
@@ -6,7 +8,37 @@ DATA_DIR = ML_ROOT / "data"
 MODELS_DIR = ML_ROOT / "models"
 REPORTS_DIR = ML_ROOT / "reports"
 OUTPUTS_DIR = ML_ROOT / "outputs"
-HEATMAPS_DIR = OUTPUTS_DIR / "heatmaps"
+
+
+def _resolve_heatmaps_dir() -> Path:
+    """Returns a guaranteed writable path for heatmap outputs."""
+    env_dir = os.environ.get("MEDGUARD_HEATMAPS_DIR")
+    if env_dir:
+        p = Path(env_dir)
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    # In serverless/container environments (Vercel, AWS Lambda), write to /tmp
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        p = Path(tempfile.gettempdir()) / "medguard_heatmaps"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    try:
+        OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+        test_file = OUTPUTS_DIR / ".write_test"
+        test_file.touch()
+        test_file.unlink()
+        p = OUTPUTS_DIR / "heatmaps"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+    except OSError:
+        p = Path(tempfile.gettempdir()) / "medguard_heatmaps"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+
+HEATMAPS_DIR = _resolve_heatmaps_dir()
 DEMO_SAMPLES_DIR = ML_ROOT / "demo_samples"
 TESTS_DIR = ML_ROOT / "tests"
 

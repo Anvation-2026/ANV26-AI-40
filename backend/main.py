@@ -7,10 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# Ensure repo root is on sys.path
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# Ensure repo root and backend directory are on sys.path
+BACKEND_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BACKEND_DIR.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from backend.api.routes.health import router as health_router
 from backend.api.routes.prediction import router as prediction_router
@@ -41,10 +44,11 @@ def create_app() -> FastAPI:
     # Security Headers
     app.add_middleware(SecurityHeadersMiddleware)
 
-    # CORS
+    # CORS (allow local dev ports plus all vercel.app preview and production domains)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,
+        allow_origin_regex=r"^https://.*\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],

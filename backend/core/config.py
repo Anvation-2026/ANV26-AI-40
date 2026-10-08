@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     MIN_IMAGE_DIM: int = 64
     MAX_IMAGE_DIM: int = 8000
     MAX_IMAGE_PIXELS: int = 40_000_000
-    CORS_ORIGINS: Union[str, List[str]] = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: Union[str, List[str]] = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000,http://127.0.0.1:3000,https://*.vercel.app"
     VALIDATION_REPORT_PATH: str = "ml/reports/validation_report.json"
     ML_MODULE_PATH: str = "ml.interface"
     INFERENCE_TIMEOUT_SECONDS: float = 30.0
@@ -35,6 +35,10 @@ class Settings(BaseSettings):
         if p.exists():
             return p.resolve()
         backend_dir = Path(__file__).resolve().parent.parent
+        # Check inside backend/ (e.g. backend/ml/reports/validation_report.json)
+        local_backend_candidate = backend_dir / self.VALIDATION_REPORT_PATH
+        if local_backend_candidate.exists():
+            return local_backend_candidate.resolve()
         repo_root = backend_dir.parent
         candidate = repo_root / self.VALIDATION_REPORT_PATH
         if candidate.exists():

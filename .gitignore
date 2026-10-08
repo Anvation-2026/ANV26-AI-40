@@ -27,6 +27,7 @@ share/python-wheels/
 
 # Virtual environments
 .venv/
+.venv-ml/
 env/
 venv/
 ENV/
@@ -45,6 +46,7 @@ frontend/coverage/
 .coverage
 htmlcov/
 *.log
+logs/
 
 # OS & IDE
 .DS_Store
@@ -53,6 +55,11 @@ Thumbs.db
 .idea/
 *.swp
 
-# Local ML datasets
+# Local ML datasets & generated packages
 ml/data/
 ml/outputs/heatmaps/
+/backend/ml/
+**/*.prev.pth
+**/densenet201_chestmnist.pth
+.env
+.vercel

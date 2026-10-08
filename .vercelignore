@@ -1,0 +1,27 @@
+# Git & CI/CD
+.git
+.github
+
+# Virtual environments & Caches
+.venv*
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.log
+
+# Heavy ML datasets & non-runtime files (saves >300 MB)
+ml/data/
+**/data/*.npz
+**/*.prev.pth
+**/densenet201_chestmnist.pth
+ml/reports/*.png
+ml/tests/
+backend/tests/
+frontend/src/__tests__/
+frontend/coverage/
+
+# Local artifacts & scratch
+scratch/
