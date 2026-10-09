@@ -14,16 +14,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const [backendAlive, setBackendAlive] = useState<boolean | null>(null);
+  const [backendMode, setBackendMode] = useState<'real' | 'demo'>('demo');
   const [modelStatus, setModelStatus] = useState<ModelStatusResponse | null>(null);
 
   useEffect(() => {
     let mounted = true;
     getHealth()
-      .then(() => {
-        if (mounted) setBackendAlive(true);
+      .then((health) => {
+        if (mounted) {
+          setBackendMode(health.mode === 'real' ? 'real' : 'demo');
+          setBackendAlive(true);
+        }
       })
       .catch(() => {
-        if (mounted) setBackendAlive(false);
+        if (mounted) {
+          setBackendMode('demo');
+          setBackendAlive(false);
+        }
       });
 
     getModelStatus()
@@ -90,6 +97,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <TopBar
           pageTitle={getPageTitle()}
           backendAlive={backendAlive}
+          backendMode={backendMode}
           onToggleMobileNav={() => setMobileOpen(true)}
         />
 

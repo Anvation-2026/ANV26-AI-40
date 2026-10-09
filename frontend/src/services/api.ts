@@ -6,7 +6,33 @@ import {
   FractureStatusResponse,
 } from '../types/analysis';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const ENV_API_BASE = import.meta.env.VITE_API_BASE || '';
+
+export function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const custom = localStorage.getItem('medguard_api_base');
+    if (custom) return custom.replace(/\/$/, '');
+  }
+  return ENV_API_BASE;
+}
+
+export function setApiBase(url: string): void {
+  if (typeof window !== 'undefined') {
+    if (!url) {
+      localStorage.removeItem('medguard_api_base');
+    } else {
+      localStorage.setItem('medguard_api_base', url.replace(/\/$/, ''));
+    }
+  }
+}
+
+export function isStaticHostWithoutBackend(): boolean {
+  if (typeof window === 'undefined') return false;
+  const currentApi = getApiBase();
+  if (currentApi) return false; // If custom/env backend URL is set, attempt live backend
+  // On GitHub Pages or static host without local backend, avoid sending doomed requests to static file server
+  return window.location.hostname.endsWith('github.io');
+}
 
 export class NetworkError extends Error {
   constructor(message: string) {
@@ -322,13 +348,24 @@ async function handleResponse<T>(res: Response, endpointDesc: string): Promise<T
 }
 
 export async function getHealth(): Promise<HealthResponse> {
+  if (isStaticHostWithoutBackend()) {
+    return {
+      status: 'ok',
+      mode: 'demo',
+      version: '1.0.0-demo',
+      ml_module_loaded: true,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  const apiBase = getApiBase();
   try {
-    const res = await fetch(`${API_BASE}/api/health`);
+    const res = await fetch(`${apiBase}/api/health`);
     if (res.ok) {
       return await handleResponse<HealthResponse>(res, 'Health check');
     }
   } catch {
-    // Network offline / static host
+    // Network offline / fallback to demo
   }
 
   // Graceful Demo Mode fallback
@@ -342,8 +379,25 @@ export async function getHealth(): Promise<HealthResponse> {
 }
 
 export async function getModelStatus(): Promise<ModelStatusResponse> {
+  if (isStaticHostWithoutBackend()) {
+    return {
+      available: true,
+      model_name: 'ResNet-18 (Interactive Demo)',
+      model_version: 'v1.0-demo',
+      supported_image_type: 'Chest X-ray (educational)',
+      inference_ready: true,
+      calibration_available: true,
+      ood_available: true,
+      quality_available: true,
+      gradcam_available: true,
+      mode: 'demo',
+      message: 'Client-side interactive demo active (ready for evaluation)',
+    };
+  }
+
+  const apiBase = getApiBase();
   try {
-    const res = await fetch(`${API_BASE}/api/model/status`);
+    const res = await fetch(`${apiBase}/api/model/status`);
     if (res.ok) {
       return await handleResponse<ModelStatusResponse>(res, 'Model status');
     }
@@ -367,13 +421,16 @@ export async function getModelStatus(): Promise<ModelStatusResponse> {
 }
 
 export async function getValidation(): Promise<ValidationResponse> {
-  try {
-    const res = await fetch(`${API_BASE}/api/validation`);
-    if (res.ok) {
-      return await handleResponse<ValidationResponse>(res, 'Validation report');
+  if (!isStaticHostWithoutBackend()) {
+    const apiBase = getApiBase();
+    try {
+      const res = await fetch(`${apiBase}/api/validation`);
+      if (res.ok) {
+        return await handleResponse<ValidationResponse>(res, 'Validation report');
+      }
+    } catch {
+      // Fall through to embedded report
     }
-  } catch {
-    // Fall through to embedded report
   }
 
   return {
@@ -416,31 +473,34 @@ export async function predictImage(
   signal?: AbortSignal,
   demoScenario?: string
 ): Promise<AnalysisResponse> {
-  const formData = new FormData();
-  formData.append('file', file);
+  if (!isStaticHostWithoutBackend()) {
+    const formData = new FormData();
+    formData.append('file', file);
 
-  const headers: Record<string, string> = {};
-  if (demoScenario) {
-    headers['X-Demo-Scenario'] = demoScenario;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/api/predict`, {
-      method: 'POST',
-      body: formData,
-      headers,
-      signal,
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      return data as AnalysisResponse;
+    const headers: Record<string, string> = {};
+    if (demoScenario) {
+      headers['X-Demo-Scenario'] = demoScenario;
     }
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
-      throw err;
+
+    const apiBase = getApiBase();
+    try {
+      const res = await fetch(`${apiBase}/api/predict`, {
+        method: 'POST',
+        body: formData,
+        headers,
+        signal,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return data as AnalysisResponse;
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        throw err;
+      }
+      // Fall back to client-side demo inference
     }
-    // Fall back to client-side demo inference
   }
 
   // Simulate short network latency for realism
@@ -449,13 +509,16 @@ export async function predictImage(
 }
 
 export async function getFractureStatus(): Promise<FractureStatusResponse> {
-  try {
-    const res = await fetch(`${API_BASE}/api/fracture/status`);
-    if (res.ok) {
-      return await handleResponse<FractureStatusResponse>(res, 'Fracture model status');
+  if (!isStaticHostWithoutBackend()) {
+    const apiBase = getApiBase();
+    try {
+      const res = await fetch(`${apiBase}/api/fracture/status`);
+      if (res.ok) {
+        return await handleResponse<FractureStatusResponse>(res, 'Fracture model status');
+      }
+    } catch {
+      // Fall through
     }
-  } catch {
-    // Fall through
   }
 
   return {
@@ -473,20 +536,23 @@ export async function predictFracture(
   file: File,
   signal?: AbortSignal
 ): Promise<any> {
-  const formData = new FormData();
-  formData.append('file', file);
+  if (!isStaticHostWithoutBackend()) {
+    const formData = new FormData();
+    formData.append('file', file);
 
-  try {
-    const res = await fetch(`${API_BASE}/api/fracture/predict`, {
-      method: 'POST',
-      body: formData,
-      signal,
-    });
-    if (res.ok) {
-      return await res.json();
+    const apiBase = getApiBase();
+    try {
+      const res = await fetch(`${apiBase}/api/fracture/predict`, {
+        method: 'POST',
+        body: formData,
+        signal,
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') throw err;
     }
-  } catch (err: any) {
-    if (err.name === 'AbortError') throw err;
   }
 
   // Realistic fallback demo response
@@ -531,13 +597,16 @@ export async function predictFracture(
 }
 
 export async function getFractureValidation(): Promise<any> {
-  try {
-    const res = await fetch(`${API_BASE}/api/fracture/validation`);
-    if (res.ok) {
-      return await handleResponse(res, 'Fracture validation report');
+  if (!isStaticHostWithoutBackend()) {
+    const apiBase = getApiBase();
+    try {
+      const res = await fetch(`${apiBase}/api/fracture/validation`);
+      if (res.ok) {
+        return await handleResponse(res, 'Fracture validation report');
+      }
+    } catch {
+      // Fall through
     }
-  } catch {
-    // Fall through
   }
 
   return {
@@ -557,13 +626,16 @@ export async function getFractureValidation(): Promise<any> {
 }
 
 export async function getRegisteredModels(): Promise<any> {
-  try {
-    const res = await fetch(`${API_BASE}/api/models`);
-    if (res.ok) {
-      return await handleResponse(res, 'Registered models list');
+  if (!isStaticHostWithoutBackend()) {
+    const apiBase = getApiBase();
+    try {
+      const res = await fetch(`${apiBase}/api/models`);
+      if (res.ok) {
+        return await handleResponse(res, 'Registered models list');
+      }
+    } catch {
+      // Fall through
     }
-  } catch {
-    // Fall through
   }
 
   return {
@@ -585,3 +657,5 @@ export async function getRegisteredModels(): Promise<any> {
     ],
   };
 }
+
+
