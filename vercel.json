@@ -7,8 +7,7 @@
     "backend": {
       "root": "backend/",
       "entrypoint": "main:app",
-      "buildCommand": "python package_ml.py",
-      "maxDuration": 60
+      "buildCommand": "python package_ml.py"
     }
   },
   "rewrites": [
