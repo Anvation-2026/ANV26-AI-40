@@ -1,0 +1,23 @@
+{
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "total_vram_mb": 4095.5,
+  "benchmarks": {
+    "dataloader_fps": 31.4318967541774,
+    "feature_extraction_fps": 85.09839822161777,
+    "feature_extraction_peak_vram_mb": 552.564453125,
+    "stage_a_train_fps": 66.22370732817811,
+    "stage_a_peak_vram_mb": 397.85205078125,
+    "stage_c_finetune_fps": 30.21415034266865,
+    "stage_c_peak_vram_mb": 759.44873046875
+  },
+  "projections": {
+    "train_set_size": 17007,
+    "val_set_size": 3418,
+    "online_epoch_seconds": 541.0745693461758,
+    "online_5_epochs_minutes": 45.089547445514654,
+    "cache_extraction_minutes": 10.830293485913293,
+    "cached_training_epoch_seconds": 3.4014,
+    "cache_storage_mb": 79.78515625
+  }
+}

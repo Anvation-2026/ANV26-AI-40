@@ -1,7 +1,19 @@
+"""
+ml/src/gradcam.py -- Grad-CAM Visualization for ResNet-18 and DenseNet-201.
+===========================================================================
+Generates visual attention maps representing model decision evidence.
+
+Clinical Disclaimer:
+  Grad-CAM heatmaps highlight visual patterns that influenced the model's prediction.
+  They are explanatory representations of model attention, NOT verified anatomical lesions
+  or definitive medical diagnoses.
+"""
+
+from __future__ import annotations
+
 import contextlib
-import uuid
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Union
 
 import cv2
 import numpy as np
@@ -10,24 +22,65 @@ import torch.nn as nn
 
 # Path bootstrap
 try:
-    from src import _ML_ROOT  # noqa: F401  # python -m src.x from ml/
+    from config import HEATMAPS_DIR, IMAGE_SIZE
 except ModuleNotFoundError:
-    import _pathfix  # noqa: F401  # python x.py from ml/src/
+    from ..config import HEATMAPS_DIR, IMAGE_SIZE
 
-from config import IMAGE_SIZE, HEATMAPS_DIR
+GRADCAM_DISCLAIMER = (
+    "Grad-CAM heatmaps show where the model focused when calculating disease probability; "
+    "they are explanatory model evidence, not medically verified disease locations."
+)
+
+
+def _resolve_target_layer(model: nn.Module, target_layer: Optional[Union[str, nn.Module]] = None) -> nn.Module:
+    """
+    Safely resolves the appropriate target layer for either ResNet-18 or DenseNet-201.
+    """
+    if isinstance(target_layer, nn.Module):
+        return target_layer
+
+    if target_layer is not None and isinstance(target_layer, str):
+        # Allow nested dotted paths like "features.denseblock4"
+        curr = model
+        for part in target_layer.split("."):
+            curr = getattr(curr, part)
+        if isinstance(curr, nn.Sequential) or hasattr(curr, "__getitem__"):
+            try:
+                return curr[-1]
+            except Exception:
+                pass
+        return curr
+
+    # Automatic detection based on architecture
+    if hasattr(model, "get_gradcam_target_layer") and callable(model.get_gradcam_target_layer):
+        return model.get_gradcam_target_layer()
+
+    if hasattr(model, "features") and hasattr(model.features, "denseblock4"):
+        # DenseNet architecture
+        return model.features.denseblock4
+
+    if hasattr(model, "layer4"):
+        # ResNet architecture
+        return getattr(model, "layer4")[-1]
+
+    raise ValueError(f"Could not automatically determine Grad-CAM target layer for {type(model)}")
 
 
 class GradCAM:
     """
-    Grad-CAM implementation for ResNet-18.
-    Target layer: model.layer4[-1] (7x7 spatial feature maps for 224 input).
-    Uses forward hooks for activations and backward hooks for gradients.
-    All hooks are safely removed after each call.
+    Grad-CAM implementation supporting both ResNet-18 and DenseNet-201.
+    Uses forward hooks for activations and full backward hooks for gradients.
+    Guarantees hook cleanup via context manager.
     """
 
-    def __init__(self, model: nn.Module, target_layer_name: str = "layer4"):
+    def __init__(
+        self,
+        model: nn.Module,
+        target_layer: Optional[Union[str, nn.Module]] = None,
+    ):
         self.model = model
-        self.target_layer = getattr(model, target_layer_name)[-1]
+        self.target_layer = _resolve_target_layer(model, target_layer)
+        self.disclaimer = GRADCAM_DISCLAIMER
 
     @contextlib.contextmanager
     def _hook_context(self):
@@ -53,7 +106,7 @@ class GradCAM:
     def compute_cam(
         self,
         tensor: torch.Tensor,
-        target_class: int,
+        target_class: int = 0,
     ) -> np.ndarray:
         """
         Computes normalized Grad-CAM map (H', W') in [0, 1].
@@ -66,29 +119,32 @@ class GradCAM:
             tensor = tensor.detach().requires_grad_(True)
             logits = self.model(tensor)
 
-            # Compute gradients with respect to the target class logit
             self.model.zero_grad()
             if logits.shape[1] == 1:
+                # Binary single logit (e.g. ResNet pneumonia or TB)
                 target_score = logits[0, 0] if target_class == 1 else -logits[0, 0]
             else:
-                target_score = logits[0, target_class]
+                # Multi-class or multi-label (e.g. ChestMNIST 14)
+                target_idx = min(target_class, logits.shape[1] - 1)
+                target_score = logits[0, target_idx]
+
             target_score.backward(retain_graph=False)
 
             # activations: (1, C, H, W); gradients: (1, C, H, W)
             acts = activations["value"].detach().cpu().squeeze(0).numpy()  # (C, H, W)
             grads = gradients["value"].detach().cpu().squeeze(0).numpy()   # (C, H, W)
 
-        # Weights: mean of gradients over spatial dimensions
+        # Global average pooled gradients
         weights = grads.mean(axis=(1, 2))  # (C,)
 
-        # CAM: weighted sum of activations + ReLU
+        # Weighted combination of activation maps + ReLU
         cam = np.sum(weights[:, np.newaxis, np.newaxis] * acts, axis=0)  # (H, W)
         cam = np.maximum(cam, 0)  # ReLU
 
-        # Resize to 224x224
+        # Resize to input resolution (224, 224)
         cam = cv2.resize(cam, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
 
-        # Min-max normalize [0, 1] — handle all-zero maps
+        # Min-max normalize to [0, 1] safely
         cam_min, cam_max = cam.min(), cam.max()
         if cam_max - cam_min < 1e-8:
             cam = np.zeros_like(cam)
@@ -101,7 +157,7 @@ class GradCAM:
         self,
         tensor: torch.Tensor,
         gray224: np.ndarray,
-        target_class: int,
+        target_class: int = 0,
         save_path: Optional[Path] = None,
         alpha: float = 0.4,
     ) -> Optional[np.ndarray]:
@@ -112,6 +168,10 @@ class GradCAM:
         """
         try:
             cam = self.compute_cam(tensor, target_class)
+
+            # Ensure grayscale array is uint8
+            if gray224.dtype != np.uint8:
+                gray224 = (np.clip(gray224, 0.0, 1.0) * 255).astype(np.uint8)
 
             # Convert grayscale to 3-channel BGR
             gray_bgr = cv2.cvtColor(gray224, cv2.COLOR_GRAY2BGR)

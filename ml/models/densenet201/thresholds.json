@@ -1,0 +1,25 @@
+{
+  "model": "densenet201_mlp_1920_512_256_14",
+  "dataset": "ChestMNIST 224x224 (NIH-ChestXray14)",
+  "tuning_split": "validation",
+  "method": "youden_j_maximization",
+  "thresholds": {
+    "atelectasis": 0.4699999999999999,
+    "cardiomegaly": 0.48999999999999994,
+    "effusion": 0.42999999999999994,
+    "infiltration": 0.48999999999999994,
+    "mass": 0.4699999999999999,
+    "nodule": 0.4699999999999999,
+    "pneumonia": 0.5199999999999999,
+    "pneumothorax": 0.59,
+    "consolidation": 0.4599999999999999,
+    "edema": 0.43999999999999995,
+    "emphysema": 0.6499999999999999,
+    "fibrosis": 0.42999999999999994,
+    "pleural": 0.4599999999999999,
+    "hernia": 0.05
+  },
+  "abstention_margin": 0.1,
+  "macro_val_auroc": 0.7377,
+  "macro_val_ap": 0.121
+}

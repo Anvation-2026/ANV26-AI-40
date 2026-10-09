@@ -158,3 +158,37 @@ async def run_inference(image: Image.Image) -> MLResult:
     except Exception as exc:
         logger.error("Failed to parse MLResult from output: %s", exc)
         raise MLServiceError("Failed to parse ML inference result.")
+
+
+_DENSENET_PREDICTOR = None
+
+
+def get_densenet_predictor():
+    """Lazily load DenseNetPredictor instance."""
+    global _DENSENET_PREDICTOR
+    if _DENSENET_PREDICTOR is None:
+        try:
+            from src.predict_densenet import DenseNetPredictor
+            _DENSENET_PREDICTOR = DenseNetPredictor()
+        except ModuleNotFoundError:
+            try:
+                from ml.src.predict_densenet import DenseNetPredictor
+                _DENSENET_PREDICTOR = DenseNetPredictor()
+            except Exception as exc:
+                logger.error("Failed to import DenseNetPredictor: %s", exc)
+                return None
+        except Exception as exc:
+            logger.error("Failed to instantiate DenseNetPredictor: %s", exc)
+            return None
+    return _DENSENET_PREDICTOR
+
+
+async def run_densenet_inference(image: Image.Image) -> Dict[str, Any]:
+    """
+    Runs multi-label thoracic inference via DenseNet-201.
+    """
+    pred = get_densenet_predictor()
+    if pred is None:
+        raise MLUnavailableError("DenseNet-201 decision-support module is currently unavailable.")
+    return await asyncio.to_thread(pred.predict_image, image)
+

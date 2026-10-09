@@ -1,0 +1,49 @@
+{
+  "cuda_benchmark": {
+    "device": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "cold_load_seconds": 2.51,
+    "warm_inference_ms_mean": 132.98,
+    "warm_inference_ms_std": 265.92,
+    "warm_inference_ms_p95": 651.41,
+    "gradcam_total_ms_mean": 1261.18,
+    "gradcam_overhead_ms": 1128.2,
+    "static_model_vram_mb": 336.54,
+    "forward_peak_vram_mb": 678.1,
+    "gradcam_peak_vram_mb": 864.28,
+    "vram_headroom_mb": 3231.72
+  },
+  "cpu_fallback_benchmark": {
+    "device": "CPU",
+    "cpu_cold_load_seconds": 2.16,
+    "cpu_inference_ms_mean": 353.33,
+    "cpu_inference_ms_std": 22.0,
+    "verified_fallback": true
+  },
+  "all_models_resource_summary": {
+    "resnet18_pneumonia": {
+      "checkpoint": "ml/models/best_model.pth",
+      "file_size_mb": 43.28,
+      "params": 11180098,
+      "estimated_vram_mb": 45.0
+    },
+    "resnet18_tb": {
+      "checkpoint": "ml/models/best_model_tb.pth",
+      "file_size_mb": 129.54,
+      "params": 11180098,
+      "estimated_vram_mb": 45.0
+    },
+    "densenet201_chest14": {
+      "checkpoint": "ml/models/densenet201/best_model.pth",
+      "file_size_mb": 83.13,
+      "params": 19252942,
+      "estimated_vram_mb": 95.0
+    },
+    "convnext_base_fracture": {
+      "checkpoint": "ml/models/fracture_convnext_base/best_model.pth",
+      "file_size_mb": 341.68,
+      "params": 88222849,
+      "measured_static_vram_mb": 336.54,
+      "measured_peak_vram_mb": 864.28
+    }
+  }
+}

@@ -1,0 +1,2 @@
+stage,epoch,train_loss,val_loss,macro_auroc,macro_ap,macro_f1,lr,elapsed_s
+head,1,1.1414,1.1696,0.4778,0.1225,0.1251,0.0009055,1.5

@@ -55,11 +55,44 @@ Thumbs.db
 .idea/
 *.swp
 
-# Local ML datasets & generated packages
+# Model Checkpoints (PyTorch weights, serialized tensors, ONNX, HDF5)
+*.pth
+*.pt
+*.bin
+*.onnx
+*.ckpt
+*.h5
+*.weights
+ml/models/**/*.pth
+ml/models/**/*.pt
+ml/models/**/*.bin
+ml/models/**/*.onnx
+
+# Feature Caches & Intermediates
+ml/tasks/**/cache/
+**/cache/
+*.cache
+
+# Medical-Image Datasets & Large Archives
 ml/data/
+**/data/
+ml/data/**
+*.dcm
+*.tar.gz
+*.zip
+*.7z
+
+# Local generated ML outputs
 ml/outputs/heatmaps/
 /backend/ml/
-**/*.prev.pth
-**/densenet201_chestmnist.pth
+
+# Secrets & Environment Configurations
 .env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# Deployments & Cloud
 .vercel

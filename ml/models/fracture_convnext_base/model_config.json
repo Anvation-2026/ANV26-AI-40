@@ -1,0 +1,25 @@
+{
+  "model_name": "ConvNeXt-Base Multi-Region Bone Fracture Classifier",
+  "backbone": "convnext_base",
+  "weights": "ConvNeXt_Base_Weights.DEFAULT",
+  "feature_dim": 1024,
+  "head_architecture": "1024 -> 512 -> 256 -> 1 (GELU, Dropout 0.3)",
+  "input_resolution": [
+    224,
+    224
+  ],
+  "best_epoch": 13,
+  "best_val_auroc": 0.906078802092863,
+  "loss_function": "FocalLoss (alpha=0.55, gamma=1.5)",
+  "sampling_strategy": "Multi-Anatomy Balanced Weighted Sampling",
+  "pos_weight": 0.7334624401182346,
+  "supported_anatomies": [
+    "wrist",
+    "hand",
+    "leg",
+    "hip",
+    "shoulder",
+    "mixed"
+  ],
+  "checkpoint_path": "D:\\anvation\\ml\\models\\fracture_convnext_base\\best_model.pth"
+}

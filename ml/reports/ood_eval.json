@@ -26,7 +26,7 @@
   "note_near_ood": "Near-OOD inputs (adult chest X-rays, other body parts, different scanners) may NOT be reliably detected. OOD rejection is not guaranteed.",
   "proxy_sets_not_used_for_threshold_fitting": true,
   "precedence_experiment": {
-    "order_a_quality_then_ood_correct_rate": 0.98,
+    "order_a_quality_then_ood_correct_rate": 1.0,
     "order_b_ood_then_quality_correct_rate": 0.53,
     "chosen_ordering": "quality_gate_before_feature_ood",
     "n_samples": 100,

@@ -1,0 +1,78 @@
+{
+  "timestamp": "2026-10-09T01:48:41.074990",
+  "total_images_processed": 24410,
+  "total_clean_images": 23873,
+  "total_quarantined_images": 537,
+  "splits": {
+    "train": {
+      "total": 17007,
+      "fracture_positive": 9811,
+      "fracture_negative": 7196,
+      "pos_ratio": 0.576880108190745,
+      "by_source": {
+        "graz_pediatric_wrist": 13742,
+        "fracatlas": 3265
+      },
+      "by_anatomy": {
+        "wrist": 13742,
+        "leg": 1693,
+        "hand": 1025,
+        "mixed": 321,
+        "hip": 143,
+        "shoulder": 83
+      }
+    },
+    "val": {
+      "total": 3418,
+      "fracture_positive": 2173,
+      "fracture_negative": 1245,
+      "pos_ratio": 0.6357519016968988,
+      "by_source": {
+        "graz_pediatric_wrist": 3000,
+        "fracatlas": 418
+      },
+      "by_anatomy": {
+        "wrist": 3000,
+        "leg": 214,
+        "hand": 133,
+        "mixed": 45,
+        "hip": 17,
+        "shoulder": 9
+      }
+    },
+    "test": {
+      "total": 3448,
+      "fracture_positive": 2182,
+      "fracture_negative": 1266,
+      "pos_ratio": 0.632830626450116,
+      "by_source": {
+        "graz_pediatric_wrist": 3048,
+        "fracatlas": 400
+      },
+      "by_anatomy": {
+        "wrist": 3048,
+        "leg": 217,
+        "hand": 123,
+        "mixed": 32,
+        "hip": 19,
+        "shoulder": 9
+      }
+    },
+    "quarantine": {
+      "total": 537,
+      "reason": "Graz diagnosis_uncertain == 1.0 (ambiguous clinical finding)"
+    }
+  },
+  "all_clean_anatomy_distribution": {
+    "wrist": 19790,
+    "leg": 2124,
+    "hand": 1281,
+    "mixed": 398,
+    "hip": 179,
+    "shoulder": 101
+  },
+  "all_clean_dataset_sources": {
+    "graz_pediatric_wrist": 19790,
+    "fracatlas": 4083
+  }
+}

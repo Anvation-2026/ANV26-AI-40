@@ -3,10 +3,13 @@ import { motion } from 'framer-motion';
 import {
   Search,
   Loader2,
+  Bone,
+  Activity,
 } from 'lucide-react';
 import { XrayViewer } from '../components/XrayViewer';
 import { InspectorPanel, InspectorTab } from '../components/InspectorPanel';
 import { DemoModeBanner } from '../components/DemoModeBanner';
+import { BoneFractureWorkspace } from '../components/BoneFractureWorkspace';
 import { useToast } from '../components/Toast';
 import { getModelStatus, predictImage, NetworkError } from '../services/api';
 import { saveRecentAnalysis } from '../services/history';
@@ -15,6 +18,7 @@ import { AnalysisResponse, ModelStatusResponse } from '../types/analysis';
 
 export const Workspace: React.FC = () => {
   const { showToast } = useToast();
+  const [analysisModality, setAnalysisModality] = useState<'chest' | 'fracture'>('chest');
   const [modelStatus, setModelStatus] = useState<ModelStatusResponse | null>(null);
   const [demoScenario, setDemoScenario] = useState<string>('uncertain');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -145,7 +149,43 @@ export const Workspace: React.FC = () => {
       transition={{ duration: 0.2 }}
       className="space-y-3.5 h-full flex flex-col"
     >
-      {/* Top Clinical Operational Toolbar */}
+      {/* Modality Selector Navigation */}
+      <div className="flex items-center justify-between border-b border-border pb-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 p-1 bg-surface rounded-xl border border-border shadow-xs">
+          <button
+            type="button"
+            onClick={() => setAnalysisModality('chest')}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-2 transition-all ${
+              analysisModality === 'chest'
+                ? 'bg-teal-600 text-white shadow-xs'
+                : 'text-navy-muted hover:text-navy-foreground'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            Chest Radiographs (Pneumonia, TB &amp; Chest-14)
+          </button>
+          <button
+            type="button"
+            onClick={() => setAnalysisModality('fracture')}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-2 transition-all ${
+              analysisModality === 'fracture'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-navy-muted hover:text-navy-foreground'
+            }`}
+          >
+            <Bone className="w-3.5 h-3.5" />
+            Bone Fracture Analysis (ConvNeXt-Base)
+          </button>
+        </div>
+      </div>
+
+      {analysisModality === 'fracture' ? (
+        <div className="flex-1 overflow-y-auto">
+          <BoneFractureWorkspace />
+        </div>
+      ) : (
+        <>
+          {/* Top Clinical Operational Toolbar */}
       <div className="bg-surface rounded-[12px] border border-border px-4 py-2.5 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs flex-shrink-0">
         {/* Left: Branding & Status */}
         <div className="flex items-center gap-2.5">
@@ -271,6 +311,8 @@ export const Workspace: React.FC = () => {
           />
         </div>
       </div>
+        </>
+      )}
 
       {/* Minimal System Disclaimer Footer */}
       <div className="text-center py-1 text-[11px] text-navy-muted/80 flex-shrink-0">

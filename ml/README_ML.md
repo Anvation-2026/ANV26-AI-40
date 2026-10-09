@@ -145,6 +145,75 @@ Actual Pneumonia       4                386
 ## 4. Key Limitations & Regulatory Disclaimers
 
 1. **Educational prototype:** Not a medical device and not for clinical diagnosis or treatment planning.
-2. **Pediatric population constraint:** Trained exclusively on PneumoniaMNIST (pediatric chest radiographs). Performance on adults or alternate imaging centers is unknown.
+2. **Pediatric population constraint:** The ResNet-18 pneumonia model was trained on PneumoniaMNIST (pediatric chest radiographs). Performance on adults or alternate imaging centers is unknown.
 3. **Heatmap interpretation:** Grad-CAM overlays indicate regions where the neural network's activations were sensitive; they do not confirm pathology.
 4. **Zero false negatives not guaranteed:** The model achieves 98.97% test sensitivity (4 false negatives out of 390 cases).
+
+---
+
+## 5. DenseNet-201 Multi-Label Chest Radiograph Subsystem
+
+### A. Overview & Target Architecture
+For comprehensive multi-label thoracic finding analysis across 14 co-existing pathologies, MedGuard AI integrates a specialized DenseNet-201 model:
+
+```
+Input: 1x224x224 grayscale radiograph
+  │
+  ▼
+[3-Channel Adaptation + ImageNet Normalization]
+  │
+  ▼
+[DenseNet-201 Backbone (ImageNet Pretrained)] ──► features.denseblock4 (Grad-CAM hook)
+  │
+  ▼
+[Global Average Pooling] ──► 1920-d Penultimate Feature Vector (OOD Detector)
+  │
+  ▼
+[MLP Classifier Head]
+  ├─ Linear(1920 -> 512) -> ReLU -> Dropout(0.3)
+  ├─ Linear(512 -> 256) -> ReLU -> Dropout(0.3)
+  └─ Linear(256 -> 14 logits)
+  │
+  ├─ Training: BCEWithLogitsLoss with inverse-frequency pos_weights
+  └─ Inference: Sigmoid -> 14 Independent Probabilities in [0, 1]
+```
+
+### B. Official Dataset (ChestMNIST 224x224)
+- **Source**: MedMNIST v2 (NIH-ChestXray14 subset, Record 10519652)
+- **Archive**: `ml/data/chestmnist_224.npz` (3,889,293,042 bytes, MD5: `45bd33e6f06c3e8cdb481c74a89152aa`)
+- **Partitions**: Train (78,468), Val (11,219), Test (22,433) — Total: 112,120 images
+- **14 Official Finding Labels**:
+  `atelectasis`, `cardiomegaly`, `effusion`, `infiltration`, `mass`, `nodule`, `pneumonia`, `pneumothorax`, `consolidation`, `edema`, `emphysema`, `fibrosis`, `pleural`, `hernia`.
+- *(Note: ChestMNIST does not include a Tuberculosis label; TB screening is decoupled into `train_tb.py`)*.
+
+### C. 4 GB VRAM Optimization
+- **Stage 1 (Warmup)**: Backbone frozen, training only the MLP classifier head (peak VRAM: **682.1 MB**).
+- **Stage 2 (Fine-Tuning)**: Unfreezes `features.denseblock4` and `features.norm5`.
+- **Micro-Batching**: Batch size 4 with 8 gradient accumulation steps ($\rightarrow$ Effective batch size: 32).
+- **Mixed Precision**: Automatic FP16 scaling (`torch.amp.autocast('cuda')`).
+
+### D. Training, Evaluation & API Commands
+```bash
+# 1. Download official 3.89 GB ChestMNIST dataset (resumable)
+python ml/download_chestmnist.py
+
+# 2. Run unit & GPU forward/backward tests
+python -m pytest ml/tests/test_densenet.py -v
+
+# 3. Train DenseNet-201 (Two-stage memory-conscious pipeline)
+python ml/src/train_densenet.py --batch-size 4 --grad-accum 8 --head-epochs 5 --finetune-epochs 5
+
+# 4. Multi-Label Inference API endpoint
+# POST http://127.0.0.1:8000/api/predict/chestmnist (multipart/form-data with 'file')
+```
+
+---
+
+## 6. Isolated Model Registry
+
+| Model Name | Architecture | Task | Dataset | Checkpoint Path | Status |
+|---|---|---|---|---|:---:|
+| **MedGuard Pneumonia** | ResNet-18 + Linear | Binary (Normal / Pneumonia) | PneumoniaMNIST 224x224 | `ml/models/best_model.pth` | Active |
+| **MedGuard TB** | ResNet-18 + Dropout + Head | Binary (Non-TB / TB) | TBX11K (12,278 imgs) | `ml/models/best_model_tb.pth` | Trained (AUROC 0.9975) |
+| **MedGuard Chest-14** | DenseNet-201 + 3-layer MLP | 14-label Multi-Label | ChestMNIST 224x224 | `ml/models/densenet201/best_model.pth` | Active / Training |
+

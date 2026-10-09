@@ -1,0 +1,7 @@
+{
+  "optimal_threshold_youden": 0.5279,
+  "high_sensitivity_threshold": 0.4304,
+  "validation_best_j": 0.6837950975554311,
+  "validation_sensitivity_at_opt": 0.8380119650253106,
+  "validation_specificity_at_opt": 0.8457831325301205
+}

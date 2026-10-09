@@ -161,3 +161,61 @@ async def predict_image(
     )
 
     return JSONResponse(status_code=200, content=analysis_resp.model_dump())
+
+
+@router.post("/predict/chestmnist")
+async def predict_chestmnist_multilabel(
+    file: UploadFile = File(...),
+) -> JSONResponse:
+    """
+    Evaluates 14 thoracic findings on frontal chest radiograph via DenseNet-201.
+    Preserves ResNet-18 endpoint separately.
+    """
+    request_id = str(uuid.uuid4())
+    logger.info("Handling ChestMNIST DenseNet-201 prediction request %s", request_id)
+
+    try:
+        pil_img, _raw = await validate_and_load_image(file)
+    except ImageValidationError as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "request_id": request_id,
+                "status": "invalid_input",
+                "error": exc.message,
+            },
+        )
+    except Exception as exc:
+        logger.error("Error during image validation: %s", exc)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "request_id": request_id,
+                "status": "error",
+                "error": "Failed to validate image input",
+            },
+        )
+
+    try:
+        result = await ml_service.run_densenet_inference(pil_img)
+        return JSONResponse(status_code=200, content={"request_id": request_id, **result})
+    except MLUnavailableError as exc:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "request_id": request_id,
+                "status": "model_unavailable",
+                "message": str(exc),
+            },
+        )
+    except Exception as exc:
+        logger.error("DenseNet inference error: %s", exc)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "request_id": request_id,
+                "status": "error",
+                "message": "Error occurred during DenseNet-201 inference.",
+            },
+        )
+

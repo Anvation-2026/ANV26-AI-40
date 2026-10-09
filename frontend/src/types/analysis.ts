@@ -152,3 +152,53 @@ export interface ValidationResponse {
   report: ValidationReport | null;
   message: string | null;
 }
+
+export interface FractureStatusResponse {
+  available: boolean;
+  status: string;
+  model_name?: string;
+  backbone?: string;
+  device?: string;
+  checkpoint_path?: string;
+  supported_anatomies?: string[];
+  message?: string;
+}
+
+export interface FractureQualityInfo {
+  acceptable: boolean;
+  width: number;
+  height: number;
+  mean_intensity: number;
+  std_intensity: number;
+  issues: string[];
+  status: string;
+}
+
+export interface FractureEvidenceInfo {
+  gradcam_overlay_base64: string | null;
+  disclaimer: string;
+}
+
+export interface FractureAnalysisResponse {
+  request_id: string;
+  available: boolean;
+  status?: string;
+  error?: string;
+  message?: string;
+  model_name?: string;
+  model_version?: string;
+  task?: string;
+  finding?: string;
+  fracture_detected?: boolean;
+  raw_probability?: number;
+  calibrated_probability?: number;
+  decision_threshold?: number;
+  uncertainty?: 'low' | 'medium' | 'high';
+  review_required?: boolean;
+  image_quality?: FractureQualityInfo;
+  supported_anatomy_status?: string;
+  supported_anatomies?: string[];
+  evidence?: FractureEvidenceInfo;
+  model_limitations?: string;
+  validation_reference?: string;
+}

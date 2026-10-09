@@ -18,6 +18,8 @@ if str(BACKEND_DIR) not in sys.path:
 from backend.api.routes.health import router as health_router
 from backend.api.routes.prediction import router as prediction_router
 from backend.api.routes.validation import router as validation_router
+from backend.api.routes.fracture import router as fracture_router
+from backend.api.routes.models import router as models_router
 from backend.core.config import settings
 from backend.core.logging_config import logger
 from backend.schemas.analysis import AnalysisStatus
@@ -58,6 +60,8 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(prediction_router)
     app.include_router(validation_router)
+    app.include_router(fracture_router)
+    app.include_router(models_router)
 
     # Mount static assets if directory exists
     public_assets = REPO_ROOT / "frontend" / "public" / "assets"

@@ -1,0 +1,107 @@
+{
+  "global_test_metrics": {
+    "test_samples": 3448,
+    "decision_threshold": 0.52,
+    "auroc": 0.938848911748139,
+    "average_precision": 0.958289959716908,
+    "sensitivity": 0.8588450962419798,
+    "specificity": 0.9036334913112164,
+    "precision": 0.938877755511022,
+    "f1": 0.897079942556247,
+    "balanced_accuracy": 0.881239293776598,
+    "brier_score": 0.09240087866783142,
+    "tp": 1874,
+    "tn": 1144,
+    "fp": 122,
+    "fn": 308
+  },
+  "calibration": {
+    "optimal_threshold_youden": 0.52,
+    "high_sensitivity_threshold": 0.1515,
+    "validation_best_j": 0.7576160139869187,
+    "validation_sensitivity_at_opt": 0.8531983433041878,
+    "validation_specificity_at_opt": 0.9044176706827309
+  },
+  "by_anatomical_region": [
+    {
+      "anatomical_region": "wrist",
+      "total_samples": 3048,
+      "positives": 2119,
+      "negatives": 929,
+      "sensitivity": 0.8721,
+      "specificity": 0.8805,
+      "f1_score": 0.9063,
+      "auroc": 0.9316
+    },
+    {
+      "anatomical_region": "hand",
+      "total_samples": 123,
+      "positives": 33,
+      "negatives": 90,
+      "sensitivity": 0.3636,
+      "specificity": 0.9111,
+      "f1_score": 0.4528,
+      "auroc": 0.7754
+    },
+    {
+      "anatomical_region": "leg",
+      "total_samples": 217,
+      "positives": 25,
+      "negatives": 192,
+      "sensitivity": 0.48,
+      "specificity": 0.9896,
+      "f1_score": 0.6154,
+      "auroc": 0.8825
+    },
+    {
+      "anatomical_region": "hip",
+      "total_samples": 19,
+      "positives": 2,
+      "negatives": 17,
+      "sensitivity": 0.5,
+      "specificity": 1.0,
+      "f1_score": 0.6667,
+      "auroc": 1.0
+    },
+    {
+      "anatomical_region": "shoulder",
+      "total_samples": 9,
+      "positives": 0,
+      "negatives": 9,
+      "sensitivity": 0.0,
+      "specificity": 1.0,
+      "f1_score": 0.0,
+      "auroc": "N/A"
+    },
+    {
+      "anatomical_region": "mixed",
+      "total_samples": 32,
+      "positives": 3,
+      "negatives": 29,
+      "sensitivity": 0.3333,
+      "specificity": 0.9655,
+      "f1_score": 0.4,
+      "auroc": 0.6322
+    }
+  ],
+  "by_dataset_source": [
+    {
+      "source": "graz_pediatric_wrist",
+      "samples": 3048,
+      "positives": 2119,
+      "negatives": 929,
+      "auroc": 0.9316,
+      "sensitivity": 0.8721,
+      "specificity": 0.8805
+    },
+    {
+      "source": "fracatlas",
+      "samples": 400,
+      "positives": 63,
+      "negatives": 337,
+      "auroc": 0.8574,
+      "sensitivity": 0.4127,
+      "specificity": 0.9674
+    }
+  ]
+}

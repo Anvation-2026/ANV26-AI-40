@@ -6,11 +6,19 @@
 
 ## 1. Product Summary
 
-MedGuard AI provides transparent, rule-based decision support for educational chest radiographs (Normal vs. Pneumonia). The system prioritizes clinical safety through:
-- **Strict Pre-Inference Quality Checks**: Heuristic evaluation of image blur, underexposure/overexposure, and contrast thresholds.
-- **Out-of-Distribution (OOD) Guardrails**: Domain validation ensuring inputs match chest X-ray distribution.
-- **Safety Abstention**: When model uncertainty exceeds acceptable thresholds or image quality is degraded, the engine suppresses definitive findings and directly routes to expert human review.
-- **Explainable Evidence Localization**: Grad-CAM activation heatmaps with original/overlay/side-by-side toggles.
+MedGuard AI provides transparent, rule-based decision support for educational medical imaging across both chest and musculoskeletal modalities:
+- **Chest Radiograph Analysis**:
+  - ResNet-18 (Normal vs. Pneumonia)
+  - ResNet-18 (Normal vs. Tuberculosis)
+  - DenseNet-201 (14 Multi-Label Chest Pathologies)
+- **Multi-Region Bone Fracture Analysis**:
+  - ImageNet-pretrained **ConvNeXt-Base** (88.2M parameters) with custom 3-stage GELU MLP classification head (`1024 -> 512 -> 256 -> 1`).
+  - Supports radiographs across wrist, hand, leg, hip, and shoulder.
+  - Generates spatial Grad-CAM activation heatmaps hooked to `features[7]`.
+- **Strict Pre-Inference Quality Checks**: Heuristic evaluation of image blur, underexposure/overexposure, and dynamic range thresholds.
+- **Out-of-Distribution (OOD) Guardrails**: Domain validation ensuring inputs match expected radiographic distribution.
+- **Safety Abstention & Triage**: When model uncertainty exceeds acceptable thresholds (margin < 0.10) or image quality is degraded, the engine suppresses definitive findings and directly routes to expert human clinician review.
+- **Unified Model Registry**: Live API tracking hardware footprint, checkpoint state, and parameter counts for all active models.
 - **Honest Metrics Dashboard**: Independent validation metrics loaded strictly from benchmark reports without fabrication or hardcoded numbers.
 
 ---
@@ -18,8 +26,9 @@ MedGuard AI provides transparent, rule-based decision support for educational ch
 ## 2. Tech Stack
 
 - **Frontend**: React 18, Vite, TypeScript (strict), Tailwind CSS v3.4, React Router v6, Recharts, Lucide React, native `fetch`.
-- **Backend**: Python 3.10+, FastAPI, Pydantic v2, Uvicorn, Pillow, python-multipart, pydantic-settings.
-- **Testing**: pytest (backend), vitest + @testing-library/react (frontend).
+- **Backend**: Python 3.12, FastAPI, Pydantic v2, Uvicorn, Pillow, python-multipart, pydantic-settings.
+- **Machine Learning**: PyTorch 2.11+, torchvision, CUDA 12.8, NVIDIA RTX 3050 Laptop GPU (4 GB VRAM).
+- **Testing**: pytest (backend: 46 unit & integration tests), vitest + @testing-library/react (frontend).
 
 ---
 
@@ -86,13 +95,28 @@ The frontend will be accessible at: `http://localhost:5173`.
 ### Backend Tests (pytest)
 From repository root:
 ```bash
-python -m pytest backend/tests -q
+python -m pytest backend/tests -v
 ```
-Covers:
+Covers 46 comprehensive automated test suites:
 - Image validation (corrupt, oversized, magic bytes, dimensions, decompression bombs)
 - Triage rule precedence (poor quality > OOD > high uncertainty > success)
 - Error shielding (503 model unavailable, 500 without leaking stack traces or paths)
 - Validation report parsing (missing file -> pending, malformed -> error, exact metric pass-through)
+- ConvNeXt-Base fracture endpoints (`/api/fracture/status`, `/api/fracture/predict`, `/api/fracture/model-info`, `/api/fracture/validation`)
+- Preprocessing and standalone-vs-API numerical equivalence (`test_fracture_consistency.py`)
+- Unified Model Registry and real-time GPU telemetry (`/api/models`, `/api/models/system/gpu`)
+
+### Reproducing Evaluation & Benchmarks
+```bash
+# Independent test evaluation on 3,448 held-out radiographs:
+python -m ml.tasks.fracture.evaluate
+
+# Generate diagnostic curves, comparison charts, and false-negative review sheet:
+python -m ml.tasks.fracture.generate_evaluation_artifacts
+
+# Measure cold load, warm latency, Grad-CAM, and VRAM memory benchmarks:
+python -m ml.tasks.fracture.benchmark_inference
+```
 
 ### Frontend Tests (vitest)
 From `frontend/` directory:
@@ -106,6 +130,7 @@ Covers:
 - `HeatmapViewer` fallback states
 - `MetricCard` null handling
 - `ImageUploader` client pre-checks
+- Bone fracture workspace state transitions and Grad-CAM blending controls
 
 ---
 

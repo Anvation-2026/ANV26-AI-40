@@ -97,3 +97,64 @@ export async function predictImage(
 
   return data as AnalysisResponse;
 }
+
+export async function getFractureStatus(): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/api/fracture/status`);
+    return await handleResponse(res, 'Fracture model status');
+  } catch (err: any) {
+    if (err instanceof NetworkError) throw err;
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
+  }
+}
+
+export async function predictFracture(
+  file: File,
+  signal?: AbortSignal
+): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/fracture/predict`, {
+      method: 'POST',
+      body: formData,
+      signal,
+    });
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw err;
+    }
+    throw new NetworkError('API server offline — failed to reach fracture analysis endpoint.');
+  }
+
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    throw new NetworkError('API server offline or invalid response from fracture endpoint.');
+  }
+
+  return data;
+}
+
+export async function getFractureValidation(): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/api/fracture/validation`);
+    return await handleResponse(res, 'Fracture validation report');
+  } catch (err: any) {
+    if (err instanceof NetworkError) throw err;
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
+  }
+}
+
+export async function getRegisteredModels(): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/api/models`);
+    return await handleResponse(res, 'Registered models list');
+  } catch (err: any) {
+    if (err instanceof NetworkError) throw err;
+    throw new NetworkError('API server offline — connect to backend on port 8000.');
+  }
+}
