@@ -304,6 +304,13 @@ def load_checkpoint(
 ) -> Tuple[nn.Module, Dict[str, Any]]:
     path = Path(path)
     if not path.exists():
+        try:
+            from ml.models.split_merge import ensure_model_file
+            ensure_model_file(path)
+        except Exception:
+            pass
+
+    if not path.exists():
         raise FileNotFoundError(f"Checkpoint file does not exist: {path}")
 
     try:

@@ -1,0 +1,13 @@
+{
+  "original_filename": "best_model.pth",
+  "total_size_bytes": 143200527,
+  "total_parts": 4,
+  "chunk_size_bytes": 47185920,
+  "sha256": "75630bf3f6be4c0cb26661704f9ae45f274aff1463f5369e6aab118609b0e4a5",
+  "parts": [
+    "best_model.pth.part00",
+    "best_model.pth.part01",
+    "best_model.pth.part02",
+    "best_model.pth.part03"
+  ]
+}

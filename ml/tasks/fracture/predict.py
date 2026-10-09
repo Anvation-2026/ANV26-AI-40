@@ -93,6 +93,13 @@ class FracturePredictor:
             return True
 
         if not self.checkpoint_path.exists():
+            try:
+                from ml.models.split_merge import ensure_model_file
+                ensure_model_file(self.checkpoint_path)
+            except Exception:
+                pass
+
+        if not self.checkpoint_path.exists():
             logger.info(f"Fracture checkpoint not found at {self.checkpoint_path}. Model remains unavailable.")
             return False
 

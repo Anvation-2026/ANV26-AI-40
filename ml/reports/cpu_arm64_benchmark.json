@@ -1,0 +1,40 @@
+{
+  "timestamp": 1791508821.5773127,
+  "models": [
+    {
+      "model_id": "resnet18_pneumonia",
+      "name": "ResNet-18 (Pneumonia)",
+      "parameters": "11.2M",
+      "checkpoint_disk_mb": 43.28,
+      "load_time_sec": 0.214,
+      "ram_allocated_mb": 189.64,
+      "avg_latency_ms": 27.31,
+      "p95_latency_ms": 29.0
+    },
+    {
+      "model_id": "densenet201_chest14",
+      "name": "DenseNet-201 (Chest14)",
+      "parameters": "18.1M",
+      "checkpoint_disk_mb": 136.57,
+      "load_time_sec": 0.634,
+      "ram_allocated_mb": 203.98,
+      "avg_latency_ms": 121.78,
+      "p95_latency_ms": 149.07
+    },
+    {
+      "model_id": "convnext_base_fracture",
+      "name": "ConvNeXt-Base (Fracture)",
+      "parameters": "88.2M",
+      "checkpoint_disk_mb": 341.68,
+      "load_time_sec": 1.593,
+      "ram_allocated_mb": 532.84,
+      "avg_latency_ms": 194.78,
+      "p95_latency_ms": 200.66
+    }
+  ],
+  "architecture_comparison": {
+    "simultaneous_ram_mb": 926.46,
+    "lazy_loaded_ram_mb": 532.84,
+    "oracle_arm_compatible": true
+  }
+}

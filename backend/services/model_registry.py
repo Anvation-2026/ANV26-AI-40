@@ -12,7 +12,7 @@ for all registered models in the MedGuard AI ecosystem:
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import torch
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -65,9 +65,19 @@ class ModelRegistry:
                 return m
         return None
 
+    def _check_checkpoint_state(self, ckpt: Path) -> Tuple[bool, float]:
+        """Returns (exists, size_mb) considering both assembled .pth and chunked .part files."""
+        if ckpt.exists():
+            return True, round(ckpt.stat().st_size / (1024**2), 2)
+        parts = list(ckpt.parent.glob(f"{ckpt.name}.part*"))
+        if parts:
+            total_bytes = sum(p.stat().st_size for p in parts)
+            return True, round(total_bytes / (1024**2), 2)
+        return False, 0.0
+
     def _get_pneumonia_entry(self) -> Dict[str, Any]:
         ckpt = self.models_dir / "best_model.pth"
-        exists = ckpt.exists()
+        exists, size_mb = self._check_checkpoint_state(ckpt)
         return {
             "model_id": "resnet18_pneumonia",
             "task_name": "Pneumonia Detection",
@@ -77,7 +87,7 @@ class ModelRegistry:
             "model_version": "1.0.0",
             "checkpoint_path": str(ckpt),
             "checkpoint_exists": exists,
-            "checkpoint_size_mb": round(ckpt.stat().st_size / (1024**2), 2) if exists else 0,
+            "checkpoint_size_mb": size_mb,
             "validation_status": "validated",
             "inference_status": "available" if exists else "checkpoint_not_found",
             "training_dataset": "Chest X-Ray Pneumonia (Kaggle / Kermany et al.)",
@@ -94,7 +104,7 @@ class ModelRegistry:
 
     def _get_tb_entry(self) -> Dict[str, Any]:
         ckpt = self.models_dir / "best_model_tb.pth"
-        exists = ckpt.exists()
+        exists, size_mb = self._check_checkpoint_state(ckpt)
         return {
             "model_id": "resnet18_tb",
             "task_name": "Tuberculosis Detection",
@@ -104,7 +114,7 @@ class ModelRegistry:
             "model_version": "1.0.0",
             "checkpoint_path": str(ckpt),
             "checkpoint_exists": exists,
-            "checkpoint_size_mb": round(ckpt.stat().st_size / (1024**2), 2) if exists else 0,
+            "checkpoint_size_mb": size_mb,
             "validation_status": "validated",
             "inference_status": "available" if exists else "checkpoint_not_found",
             "training_dataset": "TBX11K Benchmark (Active TB / Latent TB / Controls)",
@@ -121,7 +131,7 @@ class ModelRegistry:
 
     def _get_chest14_entry(self) -> Dict[str, Any]:
         ckpt = self.models_dir / "densenet201" / "best_model.pth"
-        exists = ckpt.exists()
+        exists, size_mb = self._check_checkpoint_state(ckpt)
         return {
             "model_id": "densenet201_chest14",
             "task_name": "Multi-Label Chest Pathology Analysis",
@@ -131,7 +141,7 @@ class ModelRegistry:
             "model_version": "2.0.0",
             "checkpoint_path": str(ckpt),
             "checkpoint_exists": exists,
-            "checkpoint_size_mb": round(ckpt.stat().st_size / (1024**2), 2) if exists else 0,
+            "checkpoint_size_mb": size_mb,
             "validation_status": "trained",
             "inference_status": "available" if exists else "checkpoint_not_found",
             "training_dataset": "ChestMNIST 224x224 (NIH ChestX-ray14 Subset)",
@@ -152,7 +162,7 @@ class ModelRegistry:
 
     def _get_fracture_entry(self) -> Dict[str, Any]:
         ckpt = self.models_dir / "fracture_convnext_base" / "best_model.pth"
-        exists = ckpt.exists()
+        exists, size_mb = self._check_checkpoint_state(ckpt)
         
         # Load calibration if available
         calib_file = self.models_dir / "fracture_convnext_base" / "calibration.json"
@@ -174,7 +184,7 @@ class ModelRegistry:
             "model_version": "1.0.0",
             "checkpoint_path": str(ckpt),
             "checkpoint_exists": exists,
-            "checkpoint_size_mb": round(ckpt.stat().st_size / (1024**2), 2) if exists else 0,
+            "checkpoint_size_mb": size_mb,
             "validation_status": "validated",
             "inference_status": "available" if exists else "checkpoint_not_found",
             "training_dataset": "Graz Pediatric Wrist (15.12 GB) + FracAtlas Benchmark (0.32 GB)",

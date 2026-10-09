@@ -79,6 +79,13 @@ class DenseNetPredictor:
         self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
         self.checkpoint_path = Path(checkpoint_path)
 
+        if not self.checkpoint_path.exists():
+            try:
+                from ml.models.split_merge import ensure_model_file
+                ensure_model_file(self.checkpoint_path)
+            except Exception:
+                pass
+
         if self.checkpoint_path.exists():
             self.model, self.metadata = load_densenet_checkpoint(self.checkpoint_path, device=self.device)
             self.model_available = True

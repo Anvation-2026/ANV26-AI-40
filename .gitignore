@@ -68,6 +68,12 @@ ml/models/**/*.pt
 ml/models/**/*.bin
 ml/models/**/*.onnx
 
+# Allow split model chunks and manifests for version control (<50MB per chunk)
+!*.part*
+!*.manifest.json
+!ml/models/**/*.part*
+!ml/models/**/*.manifest.json
+
 # Feature Caches & Intermediates
 ml/tasks/**/cache/
 **/cache/
